@@ -192,7 +192,7 @@ function setupEventListeners() {
     const charmInput = document.getElementById('charm-input');
     if (charmInput) {
         charmInput.addEventListener('input', (e) => {
-            const input = e.target.value;
+        const input = e.target.value;
             if (input.length <= 15) {
                 state.charms = input.split('').filter(c => c !== '');
                 renderPreviewCanvas(3);
@@ -1259,43 +1259,126 @@ function generateShareLink() {
         return;
     }
     
-    // Encode state to base64
-    const stateData = {
-        filter: state.filter,
-        charms: state.charms.join(''),
-        image: state.image.toDataURL('image/jpeg', 0.8),
-        message: state.customMessage || '',
-        charmColor: state.charmColor || '#4A90E2',
-        musicMuted: state.musicMuted || false
-    };
+    try {
+        // Encode state to base64
+        // Use lower quality for share links to keep URL manageable
+        let quality = 0.7;
+        let imageDataUrl = state.image.toDataURL('image/jpeg', quality);
+        
+        // If URL is still too long, reduce quality further
+        while (imageDataUrl.length > 2000000 && quality > 0.3) { // ~2MB limit
+            quality -= 0.1;
+            imageDataUrl = state.image.toDataURL('image/jpeg', quality);
+        }
+        
+        const stateData = {
+            filter: state.filter,
+            charms: state.charms.join(''),
+            image: imageDataUrl,
+            message: state.customMessage || '',
+            charmColor: state.charmColor || '#4A90E2',
+            musicMuted: state.musicMuted || false
+        };
     
-    const encoded = btoa(JSON.stringify(stateData));
-    const shareUrl = window.location.origin + window.location.pathname + '#' + encoded;
-    
-    document.getElementById('share-link').value = shareUrl;
-    document.getElementById('share-modal').classList.remove('hidden');
-    
-    trackEvent('CardShared');
+        const encoded = btoa(JSON.stringify(stateData));
+        const shareUrl = window.location.origin + window.location.pathname + '#' + encoded;
+        
+        // Check if URL is too long (browser limit is typically ~2000-8000 chars)
+        if (shareUrl.length > 8000) {
+            console.warn('Share URL is very long:', shareUrl.length, 'characters');
+            // Try with even lower quality
+            quality = 0.5;
+            imageDataUrl = state.image.toDataURL('image/jpeg', quality);
+            stateData.image = imageDataUrl;
+            const newEncoded = btoa(JSON.stringify(stateData));
+            const newShareUrl = window.location.origin + window.location.pathname + '#' + newEncoded;
+            
+            if (newShareUrl.length > 8000) {
+                alert('Image is too large for share link. Please try with a smaller image or lower quality.');
+                return;
+            }
+            
+            const shareLinkInput = document.getElementById('share-link');
+            const shareModal = document.getElementById('share-modal');
+            
+            if (!shareLinkInput || !shareModal) {
+                console.error('Share modal elements not found');
+                alert('Error: Share modal not found. Please refresh the page.');
+                return;
+            }
+            
+            shareLinkInput.value = newShareUrl;
+            shareModal.classList.remove('hidden');
+        } else {
+            const shareLinkInput = document.getElementById('share-link');
+            const shareModal = document.getElementById('share-modal');
+            
+            if (!shareLinkInput || !shareModal) {
+                console.error('Share modal elements not found');
+                alert('Error: Share modal not found. Please refresh the page.');
+                return;
+            }
+            
+            shareLinkInput.value = shareUrl;
+            shareModal.classList.remove('hidden');
+        }
+        
+        trackEvent('CardShared');
+    } catch (e) {
+        console.error('Error generating share link:', e);
+        alert('Failed to generate share link. The image may be too large. Please try again.');
+    }
 }
 
 function copyShareLink() {
     const linkInput = document.getElementById('share-link');
+    if (!linkInput) {
+        console.error('Share link input not found');
+        alert('Error: Share link input not found.');
+        return;
+    }
+    
     const text = linkInput.value;
+    if (!text || text.trim() === '') {
+        alert('No link to copy. Please generate a share link first.');
+        return;
+    }
     
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
             alert('Link copied to clipboard!');
-        }).catch(() => {
-            // Fallback for older browsers
-            linkInput.select();
-            document.execCommand('copy');
-            alert('Link copied to clipboard!');
+        }).catch((err) => {
+            console.warn('Clipboard API failed, using fallback:', err);
+            // Fallback for older browsers or when clipboard API fails
+            try {
+    linkInput.select();
+                linkInput.setSelectionRange(0, 99999); // For mobile devices
+                const successful = document.execCommand('copy');
+                if (successful) {
+    alert('Link copied to clipboard!');
+                } else {
+                    alert('Failed to copy link. Please select and copy manually.');
+                }
+            } catch (e) {
+                console.error('Fallback copy failed:', e);
+                alert('Failed to copy link. Please select and copy manually.');
+            }
         });
     } else {
         // Fallback for older browsers
-    linkInput.select();
-    document.execCommand('copy');
-    alert('Link copied to clipboard!');
+        try {
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999); // For mobile devices
+            const successful = document.execCommand('copy');
+            if (successful) {
+                alert('Link copied to clipboard!');
+            } else {
+                alert('Failed to copy link. Please select and copy manually.');
+            }
+        } catch (e) {
+            console.error('Copy failed:', e);
+            alert('Failed to copy link. Please select and copy manually.');
+        }
     }
 }
 
