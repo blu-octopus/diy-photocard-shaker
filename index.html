@@ -12,14 +12,17 @@
     <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/shake.js@1.2.2/shake.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ccapture.js@1.1.0/build/CCapture.all.min.js"></script>
-    <script defer data-domain="shakecard.live" src="https://plausible.io/js/script.js"></script>
+    <!-- Plausible Analytics - Optional: Replace 'your-domain.com' with your actual domain, or remove if using only GA4 -->
+    <!-- <script defer data-domain="your-domain.com" src="https://plausible.io/js/script.js"></script> -->
     <!-- Google Analytics 4 - Replace G-XXXXXXXXXX with your Measurement ID -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-15HJ72DCWN"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-XXXXXXXXXX');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-15HJ72DCWN');
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -47,6 +50,9 @@
             right: 0;
             bottom: 0;
             overflow-y: auto;
+            overflow-x: hidden;
+            height: 100vh;
+            -webkit-overflow-scrolling: touch;
         }
         .step.active {
             display: flex;
@@ -60,11 +66,11 @@
         }
         .progress-fill {
             height: 100%;
-            background: #1976d2;
+            background: linear-gradient(90deg, #8B6F5E, #A67C7C, #9B7A6B);
             transition: width 0.3s ease;
         }
         .btn-mui {
-            background: #1976d2;
+            background: #8B6F5E;
             color: white;
             border: none;
             border-radius: 4px;
@@ -74,16 +80,20 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(139, 111, 94, 0.3);
             transition: all 0.2s ease;
             min-width: 64px;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto;
+            touch-action: manipulation;
         }
         .btn-mui:hover {
-            background: #1565c0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background: #7A5A4A;
+            box-shadow: 0 4px 8px rgba(139, 111, 94, 0.4);
         }
         .btn-mui:active {
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 2px rgba(139, 111, 94, 0.3);
         }
         .btn-mui:disabled {
             background: #e0e0e0;
@@ -93,21 +103,25 @@
         }
         .btn-mui-outlined {
             background: transparent;
-            color: #1976d2;
-            border: 1px solid #1976d2;
+            color: #8B6F5E;
+            border: 1px solid #8B6F5E;
             box-shadow: none;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto;
+            touch-action: manipulation;
         }
         .btn-mui-outlined:hover {
-            background: rgba(25, 118, 210, 0.04);
+            background: rgba(139, 111, 94, 0.08);
         }
         .btn-mui-text {
             background: transparent;
-            color: #1976d2;
+            color: #8B6F5E;
             box-shadow: none;
             padding: 8px 16px;
         }
         .btn-mui-text:hover {
-            background: rgba(25, 118, 210, 0.04);
+            background: rgba(139, 111, 94, 0.08);
         }
         .filter-preview {
             border-radius: 8px;
@@ -121,6 +135,25 @@
         .filter-preview.active {
             border-color: #1976d2;
             box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+        }
+        
+        /* Selected states for charm color buttons */
+        .charm-color-btn.active,
+        .charm-color-btn.selected {
+            border-color: #8B6F5E !important;
+            border-width: 3px !important;
+            box-shadow: 0 0 0 3px rgba(139, 111, 94, 0.3), 0 4px 8px rgba(139, 111, 94, 0.2);
+            transform: scale(1.05);
+            font-weight: 600;
+        }
+        
+        /* Selected states for charm preset buttons */
+        .charm-preset-btn.active,
+        .charm-preset-btn.selected {
+            border: 3px solid #8B6F5E;
+            box-shadow: 0 0 0 3px rgba(139, 111, 94, 0.3), 0 4px 12px rgba(139, 111, 94, 0.25);
+            transform: scale(1.05);
+            font-weight: 600;
         }
         .charm-preset-scroll {
             scrollbar-width: none;
@@ -234,6 +267,151 @@
             }
         }
         
+        /* Shifting hue animation for sparkle icon, title, and CTA button */
+        /* Morandi pastel palette with WCAG AA compliance - subtle translation */
+        @keyframes shift-hue {
+            0% { 
+                filter: hue-rotate(-10deg) saturate(0.75) brightness(1.15);
+            }
+            50% { 
+                filter: hue-rotate(10deg) saturate(0.75) brightness(1.15);
+            }
+            100% { 
+                filter: hue-rotate(-10deg) saturate(0.75) brightness(1.15);
+            }
+        }
+        
+        .hue-shift {
+            animation: shift-hue 10s ease-in-out infinite;
+            will-change: filter;
+        }
+        
+        /* Subtle shake animation for "Shaker" title */
+        @keyframes subtle-shake {
+            0%, 100% { 
+                transform: translate(0, 0) rotate(0deg);
+            }
+            10% { 
+                transform: translate(-0.5px, 0.5px) rotate(-0.3deg);
+            }
+            20% { 
+                transform: translate(0.5px, -0.5px) rotate(0.3deg);
+            }
+            30% { 
+                transform: translate(-0.3px, 0.3px) rotate(-0.2deg);
+            }
+            40% { 
+                transform: translate(0.3px, -0.3px) rotate(0.2deg);
+            }
+            50% { 
+                transform: translate(-0.4px, 0.4px) rotate(-0.25deg);
+            }
+            60% { 
+                transform: translate(0.4px, -0.4px) rotate(0.25deg);
+            }
+            70% { 
+                transform: translate(-0.2px, 0.2px) rotate(-0.15deg);
+            }
+            80% { 
+                transform: translate(0.2px, -0.2px) rotate(0.15deg);
+            }
+            90% { 
+                transform: translate(-0.3px, 0.3px) rotate(-0.2deg);
+            }
+        }
+        
+        @keyframes vigorous-shake {
+            0%, 100% { 
+                transform: translate(0, 0) rotate(0deg);
+            }
+            10% { 
+                transform: translate(-1.5px, 1.5px) rotate(-0.8deg);
+            }
+            20% { 
+                transform: translate(1.5px, -1.5px) rotate(0.8deg);
+            }
+            30% { 
+                transform: translate(-1px, 1px) rotate(-0.6deg);
+            }
+            40% { 
+                transform: translate(1px, -1px) rotate(0.6deg);
+            }
+            50% { 
+                transform: translate(-1.2px, 1.2px) rotate(-0.7deg);
+            }
+            60% { 
+                transform: translate(1.2px, -1.2px) rotate(0.7deg);
+            }
+            70% { 
+                transform: translate(-0.8px, 0.8px) rotate(-0.5deg);
+            }
+            80% { 
+                transform: translate(0.8px, -0.8px) rotate(0.5deg);
+            }
+            90% { 
+                transform: translate(-1px, 1px) rotate(-0.6deg);
+            }
+        }
+        
+        .shake-title {
+            display: inline-block;
+            animation: subtle-shake 3s ease-in-out infinite;
+            will-change: transform;
+        }
+        
+        .shake-title:hover {
+            animation: vigorous-shake 2s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200% center;
+            }
+            100% {
+                background-position: 200% center;
+            }
+        }
+        
+        #start-btn {
+            backdrop-filter: blur(10px);
+            background: linear-gradient(135deg, 
+                rgba(107, 79, 66, 0.95) 0%, 
+                rgba(134, 96, 96, 0.95) 50%, 
+                rgba(123, 94, 79, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            position: relative;
+            overflow: hidden;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        #start-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent
+            );
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        #start-btn:hover {
+            box-shadow: 0 0 20px rgba(166, 124, 124, 0.5),
+                        0 0 40px rgba(166, 124, 124, 0.4),
+                        inset 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+        
+        #start-btn span {
+            position: relative;
+            z-index: 1;
+        }
+        
         /* Enhanced tilt effect with holographic response */
         #holographic-wrapper.tilted {
             filter: brightness(1.1) contrast(1.05);
@@ -267,8 +445,9 @@
             background: white;
             border-top: 1px solid #e0e0e0;
             padding: 16px;
-            z-index: 50;
+            z-index: 100;
             box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            pointer-events: auto;
         }
         @media (min-width: 768px) {
             .action-bar {
@@ -299,7 +478,7 @@
 </head>
 <body class="bg-gray-50">
     <!-- Progress Bar -->
-    <div id="progress-container" class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200" style="display: none;">
+    <div id="progress-container" class="fixed top-0 left-0 right-0 z-90 bg-white border-b border-gray-200" style="display: none;">
         <div class="max-w-4xl mx-auto px-4 py-3">
             <div class="progress-bar">
                 <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
@@ -312,37 +491,65 @@
     </div>
 
     <!-- Step 0: Welcome Screen -->
-    <div id="step-0" class="step active bg-gradient-to-br from-blue-50 to-purple-50">
-        <div class="flex-1 flex items-center justify-center px-4">
-            <div class="text-center max-w-md w-full fade-in">
+    <div id="step-0" class="step active bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 h-screen flex flex-col">
+        <div class="flex-1 flex flex-col items-center justify-center px-4 py-6 md:py-8">
+            <div class="text-center max-w-2xl w-full fade-in">
+                <!-- Main Hero Section -->
+                <div class="mb-8 md:mb-10">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-3 leading-tight" style="font-family: Georgia, Palatino, 'Palatino Linotype', 'Book Antiqua', Garamond, 'Times New Roman', serif;">
+                        <div class="flex items-center justify-center gap-3 mb-1">
+                            <span class="material-icons text-5xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-[#A67C7C] via-[#B89A8A] to-[#C8A882] hue-shift">photo_album</span>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#A67C7C] via-[#B89A8A] to-[#C8A882] hue-shift shake-title">Shaker</span>
+                        </div>
+                        <div class="block">
+                            <span class="text-gray-800">Card-Maker</span>
+                        </div>
+                    </h1>
+                    <p class="text-lg md:text-xl text-gray-700 mb-2 font-medium">Create live shaker photo cards</p>
+                    <p class="text-sm md:text-base text-gray-600 max-w-lg mx-auto">Transform your photos into interactive digital shaker cards</p>
+                </div>
+
+                <!-- Feature Cards -->
+                <div class="flex flex-row justify-center items-start gap-6 md:gap-8 mb-8 md:mb-10">
+                    <div class="p-3 text-center">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 mx-auto" style="background-color: rgba(200, 168, 130, 0.2);">
+                            <span class="material-icons text-2xl" style="color: #8B6F5E;">photo_camera</span>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Upload Photo</h3>
+                    </div>
+                    <div class="p-3 text-center">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 mx-auto" style="background-color: rgba(184, 154, 138, 0.2);">
+                            <span class="material-icons text-2xl" style="color: #A67C7C;">palette</span>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Add Filters</h3>
+                    </div>
+                    <div class="p-3 text-center">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 mx-auto" style="background-color: rgba(200, 168, 130, 0.2);">
+                            <span class="material-icons text-2xl" style="color: #9B7A6B;">auto_awesome</span>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Custom Charms</h3>
+                    </div>
+                </div>
+
+                <!-- CTA Button - More Prominent -->
                 <div class="mb-8">
-                    <h1 class="text-5xl font-bold text-gray-900 mb-4"> Shaker Card-Maker</h1>
-                    <p class="text-lg text-gray-600 mb-2">Create live shaker photo cards</p>
-                    <p class="text-sm text-gray-500">Upload a photo, add filters & charms, and share your creation</p>
+                    <button id="start-btn" class="w-full md:w-auto px-16 py-6 text-xl font-bold text-white rounded-lg transform hover:scale-105 transition-all duration-300 hue-shift">
+                        <span class="flex items-center justify-center gap-3">
+                            <span>Create Your Card</span>
+                            <span class="material-icons text-2xl">arrow_forward</span>
+                        </span>
+                    </button>
                 </div>
-                <div class="space-y-4 mb-8">
-                    <div class="flex items-center justify-center gap-2 text-sm text-gray-600">
-                        <span class="material-icons text-blue-600">photo_camera</span>
-                        <span>Upload your photo</span>
-                    </div>
-                    <div class="flex items-center justify-center gap-2 text-sm text-gray-600">
-                        <span class="material-icons text-purple-600">palette</span>
-                        <span>Apply visual filters</span>
-                    </div>
-                    <div class="flex items-center justify-center gap-2 text-sm text-gray-600">
-                        <span class="material-icons text-pink-600">auto_awesome</span>
-                        <span>Add custom charms</span>
-                    </div>
-                </div>
-                <button id="start-btn" class="btn-mui w-full py-4 text-base mb-4">
-                    Get Started
-                </button>
-                <p class="text-xs text-gray-400 text-center">
-                    Created by <a href="https://github.com/blu-octopus" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 underline">TouchyGrass</a> | 
-                    <a href="https://github.com/blu-octopus/diy-photocard-shaker" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 underline">GitHub</a> | 
-                    <a href="https://forms.gle/2rem838GryeUay9s8" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 underline">Feedback</a>
-                </p>
             </div>
+        </div>
+        
+        <!-- Footer Links - Fixed at bottom -->
+        <div class="py-4 px-4 border-t border-gray-200/50">
+            <p class="text-xs text-gray-500 text-center">
+                Created by <a href="https://github.com/blu-octopus" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">TouchyGrass</a> | 
+                <a href="https://github.com/blu-octopus/diy-photocard-shaker" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">GitHub</a> | 
+                <a href="https://forms.gle/2rem838GryeUay9s8" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">Feedback</a>
+            </p>
         </div>
     </div>
 

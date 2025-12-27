@@ -39,7 +39,8 @@ const state = {
     mediaRecorder: null,
     charmColor: '#4A90E2', // Default blue color for charms
     backgroundMusic: null, // Background music audio element
-    musicMuted: false // Music mute state
+    musicMuted: false, // Music mute state
+    previewCharmPositions: [] // Store charm positions for preview to prevent regeneration
 };
 
 // Wait for fonts to load before initializing
@@ -125,16 +126,25 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 function setupEventListeners() {
     // Welcome screen
-    document.getElementById('start-btn').addEventListener('click', () => {
-        goToStep(1);
-    });
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            goToStep(1);
+        });
+    }
     
     // Step 1: Upload
-    document.getElementById('image-upload').addEventListener('change', handleImageUpload);
-    document.getElementById('image-upload').addEventListener('input', handleImageUpload);
-    document.getElementById('step-1-next').addEventListener('click', () => {
-        if (state.image) goToStep(2);
-    });
+    const imageUpload = document.getElementById('image-upload');
+    if (imageUpload) {
+        imageUpload.addEventListener('change', handleImageUpload);
+        imageUpload.addEventListener('input', handleImageUpload);
+    }
+    const step1Next = document.getElementById('step-1-next');
+    if (step1Next) {
+        step1Next.addEventListener('click', () => {
+            if (state.image) goToStep(2);
+        });
+    }
     
     // Drag and drop
     const uploadLabel = document.querySelector('label[for="image-upload"]');
@@ -169,22 +179,38 @@ function setupEventListeners() {
             renderPreviewCanvas(2);
         });
     });
-    document.getElementById('step-2-back').addEventListener('click', () => goToStep(1));
-    document.getElementById('step-2-next').addEventListener('click', () => goToStep(3));
+    const step2Back = document.getElementById('step-2-back');
+    if (step2Back) {
+        step2Back.addEventListener('click', () => goToStep(1));
+    }
+    const step2Next = document.getElementById('step-2-next');
+    if (step2Next) {
+        step2Next.addEventListener('click', () => goToStep(3));
+    }
     
     // Step 3: Charms
-    document.getElementById('charm-input').addEventListener('input', (e) => {
-        const input = e.target.value;
-        if (input.length <= 15) {
-            state.charms = input.split('').filter(c => c !== '');
-            renderPreviewCanvas(3);
-        }
-    });
+    const charmInput = document.getElementById('charm-input');
+    if (charmInput) {
+        charmInput.addEventListener('input', (e) => {
+            const input = e.target.value;
+            if (input.length <= 15) {
+                state.charms = input.split('').filter(c => c !== '');
+                renderPreviewCanvas(3);
+            }
+        });
+    }
     
     document.querySelectorAll('.charm-preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            // Remove active class from all preset buttons
+            document.querySelectorAll('.charm-preset-btn').forEach(b => b.classList.remove('active', 'selected'));
+            // Add active class to clicked button
+            btn.classList.add('active', 'selected');
             state.charms = btn.dataset.charms.split('');
-            document.getElementById('charm-input').value = btn.dataset.charms;
+            const charmInputEl = document.getElementById('charm-input');
+            if (charmInputEl) {
+                charmInputEl.value = btn.dataset.charms;
+            }
             renderPreviewCanvas(3);
         });
     });
@@ -193,9 +219,9 @@ function setupEventListeners() {
     document.querySelectorAll('.charm-color-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             // Remove active class from all color buttons
-            document.querySelectorAll('.charm-color-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.charm-color-btn').forEach(b => b.classList.remove('active', 'selected'));
             // Add active class to clicked button
-            btn.classList.add('active');
+            btn.classList.add('active', 'selected');
             // Update state
             state.charmColor = btn.dataset.color;
             // Clear emoji cache to force re-render with new color
@@ -205,41 +231,86 @@ function setupEventListeners() {
         });
     });
     
-    document.getElementById('step-3-back').addEventListener('click', () => goToStep(2));
-    document.getElementById('step-3-next').addEventListener('click', () => goToStep(4));
+    const step3Back = document.getElementById('step-3-back');
+    if (step3Back) {
+        step3Back.addEventListener('click', () => goToStep(2));
+    }
+    const step3Next = document.getElementById('step-3-next');
+    if (step3Next) {
+        step3Next.addEventListener('click', () => goToStep(4));
+    }
     
     // Step 4: Text Message
-    document.getElementById('custom-message-input').addEventListener('input', (e) => {
-        state.customMessage = e.target.value;
-        renderPreviewCanvas(4);
-    });
-    document.getElementById('step-4-back').addEventListener('click', () => goToStep(3));
-    document.getElementById('step-4-done').addEventListener('click', () => {
-        // Track "Generate Card" event
-        trackEvent('GenerateCard');
-        
-        goToStep('loading');
-        setTimeout(() => {
-            goToStep(5);
-            initializeFinalView();
-        }, 1500);
-    });
+    const customMessageInput = document.getElementById('custom-message-input');
+    if (customMessageInput) {
+        customMessageInput.addEventListener('input', (e) => {
+            state.customMessage = e.target.value;
+            renderPreviewCanvas(4);
+        });
+    }
+    const step4Back = document.getElementById('step-4-back');
+    if (step4Back) {
+        step4Back.addEventListener('click', () => goToStep(3));
+    }
+    const step4Done = document.getElementById('step-4-done');
+    if (step4Done) {
+        step4Done.addEventListener('click', () => {
+            // Track "Generate Card" event
+            trackEvent('GenerateCard');
+            
+            goToStep('loading');
+            setTimeout(() => {
+                goToStep(5);
+                initializeFinalView();
+            }, 1500);
+        });
+    }
     
     // Step 5: Final view
-    document.getElementById('share-btn').addEventListener('click', generateShareLink);
-    document.getElementById('download-video-btn').addEventListener('click', exportVideo);
-    document.getElementById('shake-btn').addEventListener('click', triggerShake);
-    document.getElementById('make-another-btn').addEventListener('click', resetToStart);
+    const shareBtn = document.getElementById('share-btn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', generateShareLink);
+    }
+    const downloadVideoBtn = document.getElementById('download-video-btn');
+    if (downloadVideoBtn) {
+        downloadVideoBtn.addEventListener('click', exportVideo);
+    }
+    const shakeBtn = document.getElementById('shake-btn');
+    if (shakeBtn) {
+        shakeBtn.addEventListener('click', triggerShake);
+    }
+    const makeAnotherBtn = document.getElementById('make-another-btn');
+    if (makeAnotherBtn) {
+        makeAnotherBtn.addEventListener('click', resetToStart);
+    }
     
     // Sound toggle button
-    document.getElementById('sound-toggle-btn').addEventListener('click', toggleMusic);
-    document.getElementById('copy-link-btn').addEventListener('click', copyShareLink);
-    document.getElementById('close-share-modal').addEventListener('click', () => {
-        document.getElementById('share-modal').classList.add('hidden');
-    });
+    const soundToggleBtn = document.getElementById('sound-toggle-btn');
+    if (soundToggleBtn) {
+        soundToggleBtn.addEventListener('click', toggleMusic);
+    }
+    const copyLinkBtn = document.getElementById('copy-link-btn');
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', copyShareLink);
+    }
+    const closeShareModal = document.getElementById('close-share-modal');
+    if (closeShareModal) {
+        closeShareModal.addEventListener('click', () => {
+            const shareModal = document.getElementById('share-modal');
+            if (shareModal) {
+                shareModal.classList.add('hidden');
+            }
+        });
+    }
 }
 
 function goToStep(step) {
+    // Stop music if leaving step 5
+    if (state.currentStep === 5 && step !== 5 && state.backgroundMusic) {
+        state.backgroundMusic.pause();
+        state.backgroundMusic.currentTime = 0; // Reset to beginning
+    }
+    
     // Hide all steps (full page transition)
     document.querySelectorAll('.step').forEach(s => {
         s.classList.remove('active');
@@ -258,15 +329,25 @@ function goToStep(step) {
     state.currentStep = step;
     
     // Show progress bar for steps 1-4
-    const progressContainer = document.getElementById('progress-container');
+        const progressContainer = document.getElementById('progress-container');
     if (step >= 1 && step <= 4) {
-        progressContainer.style.display = 'block';
+        if (progressContainer) {
+            progressContainer.style.display = 'block';
+        }
         updateProgress((step / 4) * 100);
-        document.getElementById('current-step-num').textContent = step;
+        const currentStepNum = document.getElementById('current-step-num');
+        if (currentStepNum) {
+            currentStepNum.textContent = step;
+        }
         const labels = ['', 'Upload Image', 'Choose Filter', 'Add Charms', 'Add Message'];
-        document.getElementById('step-label').textContent = labels[step];
+        const stepLabel = document.getElementById('step-label');
+        if (stepLabel) {
+            stepLabel.textContent = labels[step];
+        }
     } else {
-        progressContainer.style.display = 'none';
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
     }
     
     // Show current step as full page
@@ -287,7 +368,10 @@ function goToStep(step) {
 }
 
 function updateProgress(percent) {
-    document.getElementById('progress-fill').style.width = percent + '%';
+    const progressFill = document.getElementById('progress-fill');
+    if (progressFill) {
+        progressFill.style.width = percent + '%';
+    }
 }
 
 function handleImageUpload(e) {
@@ -313,8 +397,14 @@ function handleImageUpload(e) {
     
     reader.onerror = () => {
         alert('Failed to read file. Please try again.');
-        document.getElementById('upload-status').textContent = '? Upload failed';
-        document.getElementById('step-1-next').disabled = true;
+        const uploadStatus = document.getElementById('upload-status');
+        if (uploadStatus) {
+            uploadStatus.textContent = 'กั Upload failed';
+        }
+        const step1NextBtn = document.getElementById('step-1-next');
+        if (step1NextBtn) {
+            step1NextBtn.disabled = true;
+        }
     };
     
     reader.onload = (event) => {
@@ -322,8 +412,14 @@ function handleImageUpload(e) {
         
         img.onerror = () => {
             alert('Failed to load image. Please try a different file.');
-            document.getElementById('upload-status').textContent = '? Image load failed';
-            document.getElementById('step-1-next').disabled = true;
+            const uploadStatus = document.getElementById('upload-status');
+            if (uploadStatus) {
+                uploadStatus.textContent = 'กั Image load failed';
+            }
+            const step1NextBtn = document.getElementById('step-1-next');
+            if (step1NextBtn) {
+                step1NextBtn.disabled = true;
+            }
         };
         
         img.onload = () => {
@@ -347,12 +443,23 @@ function handleImageUpload(e) {
             
             // Update preview (small preview with confirmation)
             const previewImg = document.getElementById('upload-preview-img');
-            previewImg.src = resizedCanvas.toDataURL();
-            document.getElementById('upload-preview').classList.remove('hidden');
+            if (previewImg) {
+                previewImg.src = resizedCanvas.toDataURL();
+            }
+            const uploadPreview = document.getElementById('upload-preview');
+            if (uploadPreview) {
+                uploadPreview.classList.remove('hidden');
+            }
             
             // Enable next button
-            document.getElementById('step-1-next').disabled = false;
-            document.getElementById('upload-status').textContent = `${width} กั ${height} pixels`;
+            const step1NextBtn = document.getElementById('step-1-next');
+            if (step1NextBtn) {
+                step1NextBtn.disabled = false;
+            }
+            const uploadStatus = document.getElementById('upload-status');
+            if (uploadStatus) {
+                uploadStatus.textContent = `${width} กั ${height} pixels`;
+            }
             
             trackEvent('PhotocardCreated');
         };
@@ -406,31 +513,56 @@ function renderPreviewCanvas(step) {
     
     // For step 3, also draw charms preview (static, showing charm objects)
     if ((step === 3 || step === 4) && state.charms.length > 0) {
-        const targetCount = Math.max(20, state.charms.length * 2);
-        const objectsPerChar = Math.ceil(targetCount / state.charms.length);
-        let drawn = 0;
+        // Check if we need to regenerate charm positions (only if charms or color changed)
+        const currentCharmHash = state.charms.join('') + (state.charmColor || '');
+        const needsRegeneration = !state.previewCharmPositions.length || 
+                                  state.previewCharmPositions[0]?.charmHash !== currentCharmHash ||
+                                  state.previewCharmPositions[0]?.canvasWidth !== canvas.width ||
+                                  state.previewCharmPositions[0]?.canvasHeight !== canvas.height;
         
-        state.charms.forEach((charm, charmIndex) => {
-            for (let i = 0; i < objectsPerChar && drawn < targetCount; i++) {
-                const baseSize = 20;
-                const sizeVariation = (Math.random() - 0.5) * 10;
-        const fontSize = baseSize + sizeVariation;
-        
-        const x = Math.random() * (canvas.width - 40) + 20;
-        const y = Math.random() * (canvas.height * 0.6) + 50;
-        
-        // Get color for rainbow mode
-        let color = state.charmColor || '#4A90E2';
-        if (color === 'rainbow') {
-            color = getRainbowColor(charmIndex);
+        if (needsRegeneration) {
+            // Generate new positions
+            state.previewCharmPositions = [];
+            const targetCount = Math.max(20, state.charms.length * 2);
+            const objectsPerChar = Math.ceil(targetCount / state.charms.length);
+            let drawn = 0;
+            
+            state.charms.forEach((charm, charmIndex) => {
+                for (let i = 0; i < objectsPerChar && drawn < targetCount; i++) {
+                    const baseSize = 20;
+                    const sizeVariation = (Math.random() - 0.5) * 10;
+                    const fontSize = baseSize + sizeVariation;
+                    
+                    const x = Math.random() * (canvas.width - 40) + 20;
+                    const y = Math.random() * (canvas.height * 0.6) + 50;
+                    
+                    // Get color for rainbow mode
+                    let color = state.charmColor || '#4A90E2';
+                    if (color === 'rainbow') {
+                        color = getRainbowColor(charmIndex);
+                    }
+                    
+                    state.previewCharmPositions.push({
+                        charm,
+                        charmIndex,
+                        x,
+                        y,
+                        fontSize,
+                        color,
+                        charmHash: currentCharmHash,
+                        canvasWidth: canvas.width,
+                        canvasHeight: canvas.height
+                    });
+                    drawn++;
+                }
+            });
         }
         
-        // Use improved emoji rendering function for preview
-        ctx.save();
-        renderEmojiOnCanvas(ctx, charm, x, y, fontSize, color);
-        ctx.restore();
-                drawn++;
-            }
+        // Draw stored charm positions (don't regenerate)
+        state.previewCharmPositions.forEach(pos => {
+            ctx.save();
+            renderEmojiOnCanvas(ctx, pos.charm, pos.x, pos.y, pos.fontSize, pos.color);
+            ctx.restore();
         });
     }
 }
@@ -492,11 +624,16 @@ function initializeFinalView() {
     
     // Display custom message if provided
     const messageDisplay = document.getElementById('custom-message-display');
-    if (state.customMessage && state.customMessage.trim()) {
-        messageDisplay.style.display = 'block';
-        messageDisplay.querySelector('p').textContent = state.customMessage;
-    } else {
-        messageDisplay.style.display = 'none';
+    if (messageDisplay) {
+        if (state.customMessage && state.customMessage.trim()) {
+            messageDisplay.style.display = 'block';
+            const messageP = messageDisplay.querySelector('p');
+            if (messageP) {
+                messageP.textContent = state.customMessage;
+            }
+        } else {
+            messageDisplay.style.display = 'none';
+        }
     }
     
     // Initialize and play background music
@@ -558,39 +695,6 @@ function updateSoundIcon() {
     }
 }
 
-// Toggle music on/off
-function toggleMusic() {
-    if (!state.backgroundMusic) return;
-    
-    state.musicMuted = !state.musicMuted;
-    
-    if (state.musicMuted) {
-        state.backgroundMusic.pause();
-    } else {
-        state.backgroundMusic.play().catch(e => {
-            console.warn('Failed to play music:', e);
-        });
-    }
-    
-    updateSoundIcon();
-}
-
-// Update sound icon based on mute state
-function updateSoundIcon() {
-    const icon = document.getElementById('sound-icon');
-    if (!icon) return;
-    
-    if (state.musicMuted) {
-        icon.textContent = 'volume_off';
-        icon.classList.remove('text-gray-700');
-        icon.classList.add('text-gray-400');
-    } else {
-        icon.textContent = 'volume_up';
-        icon.classList.remove('text-gray-400');
-        icon.classList.add('text-gray-700');
-    }
-}
-
 function renderCanvas() {
     if (!state.image || !state.ctx) {
         if (state.ctx) {
@@ -617,6 +721,41 @@ function renderCanvas() {
     
     // Draw charms on canvas
     drawCharms();
+    
+    // Continuous anti-stuck check: push charms away from corners
+    if (state.charmBodies.length > 0) {
+        const cornerThreshold = 25;
+        const canvasWidth = state.canvas.width;
+        const canvasHeight = state.canvas.height;
+        const Body = Matter.Body;
+        
+        state.charmBodies.forEach(body => {
+            const x = body.position.x;
+            const y = body.position.y;
+            
+            // Check if stuck near corner
+            const nearLeft = x < cornerThreshold;
+            const nearRight = x > canvasWidth - cornerThreshold;
+            const nearTop = y < cornerThreshold;
+            const nearBottom = y > canvasHeight - cornerThreshold;
+            
+            if ((nearLeft || nearRight) && (nearTop || nearBottom)) {
+                // Apply small continuous force away from corner
+                const centerX = canvasWidth / 2;
+                const centerY = canvasHeight / 2;
+                const dx = centerX - x;
+                const dy = centerY - y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    Body.applyForce(body, body.position, {
+                        x: (dx / distance) * 0.02, // Small continuous force
+                        y: (dy / distance) * 0.02
+                    });
+                }
+            }
+        });
+    }
 }
 
 // Update charm physics bodies only when charms array changes
@@ -653,12 +792,12 @@ function updateCharmBodies() {
     const canvasWidth = state.canvas.width;
     const canvasHeight = state.canvas.height;
     
-    // Top, bottom, left, right walls
+    // Top, bottom, left, right walls - positioned AT canvas boundaries to prevent corner sticking
     const walls = [
-        Bodies.rectangle(canvasWidth / 2, -wallThickness / 2, canvasWidth, wallThickness, { isStatic: true, label: 'wall' }),
-        Bodies.rectangle(canvasWidth / 2, canvasHeight + wallThickness / 2, canvasWidth, wallThickness, { isStatic: true, label: 'wall' }),
-        Bodies.rectangle(-wallThickness / 2, canvasHeight / 2, wallThickness, canvasHeight, { isStatic: true, label: 'wall' }),
-        Bodies.rectangle(canvasWidth + wallThickness / 2, canvasHeight / 2, wallThickness, canvasHeight, { isStatic: true, label: 'wall' })
+        Bodies.rectangle(canvasWidth / 2, 0, canvasWidth, wallThickness, { isStatic: true, label: 'wall' }),
+        Bodies.rectangle(canvasWidth / 2, canvasHeight, canvasWidth, wallThickness, { isStatic: true, label: 'wall' }),
+        Bodies.rectangle(0, canvasHeight / 2, wallThickness, canvasHeight, { isStatic: true, label: 'wall' }),
+        Bodies.rectangle(canvasWidth, canvasHeight / 2, wallThickness, canvasHeight, { isStatic: true, label: 'wall' })
     ];
     
     state.walls = walls;
@@ -689,8 +828,9 @@ function updateCharmBodies() {
                 chamfer: { radius: 2 } // Slightly rounded edges
             });
             
-            // Store charm character and size for rendering
+            // Store charm character, index, and size for rendering
         body.charm = charm;
+            body.charmIndex = charIndex; // Store original charm index for rainbow color
             body.radius = radius;
             body.size = radius * 2;
             
@@ -816,8 +956,14 @@ function drawCharms() {
         state.ctx.translate(x, y);
         state.ctx.rotate(body.angle);
         
+        // Calculate color for rainbow mode based on stored charmIndex
+        let colorOverride = null;
+        if (state.charmColor === 'rainbow' && body.charmIndex !== undefined) {
+            colorOverride = getRainbowColor(body.charmIndex);
+        }
+        
         // Use improved emoji rendering function
-        renderEmojiOnCanvas(state.ctx, body.charm, 0, 0, fontSize);
+        renderEmojiOnCanvas(state.ctx, body.charm, 0, 0, fontSize, colorOverride);
         
         state.ctx.restore();
     });
@@ -1017,26 +1163,38 @@ function triggerShake() {
     
     state.isShaking = true;
     const Body = Matter.Body;
-    const force = 0.12; // Slightly reduced to prevent corner sticking
+    const force = 0.15; // Increased force for better shake effect
     
-    // Apply random forces to all charms, but avoid corners
+    // Define corner regions (within 30px of corners)
+    const cornerThreshold = 30;
+    const canvasWidth = state.canvas.width;
+    const canvasHeight = state.canvas.height;
+    
     state.charmBodies.forEach(body => {
-        // Calculate distance from center
-        const centerX = state.canvas.width / 2;
-        const centerY = state.canvas.height / 2;
-        const dx = body.position.x - centerX;
-        const dy = body.position.y - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+        const x = body.position.x;
+        const y = body.position.y;
         
-        // If too close to corner, push toward center
-        if (distance > maxDistance * 0.7) {
-            const angleToCenter = Math.atan2(-dy, -dx);
-            const randomVariation = (Math.random() - 0.5) * 0.5;
-            Body.applyForce(body, body.position, {
-                x: Math.cos(angleToCenter + randomVariation) * force * 0.8,
-                y: Math.sin(angleToCenter + randomVariation) * force * 0.8
-            });
+        // Check if in corner region
+        const nearLeft = x < cornerThreshold;
+        const nearRight = x > canvasWidth - cornerThreshold;
+        const nearTop = y < cornerThreshold;
+        const nearBottom = y > canvasHeight - cornerThreshold;
+        
+        if ((nearLeft || nearRight) && (nearTop || nearBottom)) {
+            // In corner - push toward center more aggressively
+            const centerX = canvasWidth / 2;
+            const centerY = canvasHeight / 2;
+            const dx = centerX - x;
+            const dy = centerY - y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 0) {
+                const pushForce = force * 1.5; // Stronger push from corners
+                Body.applyForce(body, body.position, {
+                    x: (dx / distance) * pushForce,
+                    y: (dy / distance) * pushForce
+                });
+            }
         } else {
             // Normal random shake
         const angle = Math.random() * Math.PI * 2;
@@ -1049,7 +1207,6 @@ function triggerShake() {
     
     // Play shake sound effect
     playShakeSound();
-    
     
     setTimeout(() => {
         state.isShaking = false;
@@ -1185,9 +1342,9 @@ function loadFromHash() {
             state.charmColor = decoded.charmColor || '#4A90E2';
             // Update color button selection
             document.querySelectorAll('.charm-color-btn').forEach(btn => {
-                btn.classList.remove('active');
+                btn.classList.remove('active', 'selected');
                 if (btn.dataset.color === state.charmColor) {
-                    btn.classList.add('active');
+                    btn.classList.add('active', 'selected');
                 }
             });
             
@@ -1233,6 +1390,12 @@ async function exportVideo() {
         return;
     }
     
+    // Check if browser supports MediaRecorder
+    if (typeof MediaRecorder === 'undefined') {
+        alert('Video export is not supported in this browser. Please try a modern browser like Chrome, Firefox, or Edge.');
+        return;
+    }
+    
     // Check if browser supports MediaRecorder with H.264 (MP4)
     const supportsH264 = MediaRecorder.isTypeSupported('video/mp4; codecs=avc1.42E01E') || 
                           MediaRecorder.isTypeSupported('video/mp4');
@@ -1241,6 +1404,12 @@ async function exportVideo() {
     let useMP4 = false;
     if (supportsH264) {
         useMP4 = confirm('Export format:\n\nOK = MP4 (better for social media)\nCancel = WebM (smaller file size)\n\nNote: MP4 may not work in all browsers.');
+    }
+    
+    // Check if canvas supports captureStream
+    if (!state.canvas || typeof state.canvas.captureStream !== 'function') {
+        alert('Video export is not supported in this browser. Please try a modern browser like Chrome, Firefox, or Edge.');
+        return;
     }
     
     // Use MediaRecorder API directly for better format control
@@ -1347,6 +1516,12 @@ function easeInOut(t) {
 }
 
 function resetToStart() {
+    // Stop music if playing
+    if (state.backgroundMusic) {
+        state.backgroundMusic.pause();
+        state.backgroundMusic.currentTime = 0;
+    }
+    
     // Reset all state
     state.image = null;
     state.filter = 'none';
