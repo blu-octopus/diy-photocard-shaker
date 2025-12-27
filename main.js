@@ -20,11 +20,23 @@ const state = {
     lastCharmHash: '',
     currentStep: 0,
     customMessage: '',
-    audioContext: null
+    audioContext: null,
+    emojiCache: new Map(), // Cache for emoji images
+    emojiCanvas: null, // Temporary canvas for rendering emojis
+    emojiCtx: null
 };
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
+// Wait for fonts to load before initializing
+async function initializeApp() {
+    // Wait for fonts to be ready (especially Noto Color Emoji)
+    if (document.fonts && document.fonts.ready) {
+        try {
+            await document.fonts.ready;
+        } catch (e) {
+            console.warn('Font loading check failed:', e);
+        }
+    }
+    
     // Get canvas elements
     state.canvas = document.getElementById('canvas');
     state.ctx = state.canvas?.getContext('2d');
@@ -37,6 +49,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     state.previewCanvas4 = document.getElementById('preview-canvas-4');
     state.previewCtx4 = state.previewCanvas4?.getContext('2d');
+    
+    // Create temporary canvas for emoji rendering
+    state.emojiCanvas = document.createElement('canvas');
+    state.emojiCanvas.width = 100;
+    state.emojiCanvas.height = 100;
+    state.emojiCtx = state.emojiCanvas.getContext('2d');
     
     // Initialize Audio Context for sound effects
     try {
@@ -62,7 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Initialize shake detection
+    // Initialize shake detection - use DeviceMotionEvent for real shake detection
+    setupDeviceShakeDetection();
+    
+    // Also use shake.js as fallback
     if (typeof Shake !== 'undefined') {
         const shake = new Shake({
             threshold: 15,
@@ -70,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         shake.start();
         window.addEventListener('shake', () => {
-            if (state.currentStep === 4) {
-                triggerShake();
+            if (state.currentStep === 5) {
+            triggerShake();
             }
         });
     }
@@ -81,7 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Animation loop
     requestAnimationFrame(animate);
-});
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', initializeApp);
 
 function setupEventListeners() {
     // Welcome screen
@@ -355,11 +379,10 @@ function renderPreviewCanvas(step) {
         const x = Math.random() * (canvas.width - 40) + 20;
         const y = Math.random() * (canvas.height * 0.6) + 50;
         
-        // Use emoji-friendly font stack for preview
-        ctx.font = `${fontSize}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(charm, x, y);
+        // Use improved emoji rendering function for preview
+        ctx.save();
+        renderEmojiOnCanvas(ctx, charm, x, y, fontSize);
+        ctx.restore();
                 drawn++;
             }
         });
@@ -391,10 +414,30 @@ function applyFilter(ctx, filter) {
 function initializeFinalView() {
     if (!state.image || !state.canvas || !state.ctx) return;
     
-    // Set canvas size
-    state.canvas.width = state.image.width;
-    state.canvas.height = state.image.height;
+    const wrapper = document.getElementById('holographic-wrapper');
     
+    // Set canvas size with constraints (90vw or 70vh max)
+    const maxWidth = window.innerWidth * 0.9;
+    const maxHeight = window.innerHeight * 0.7;
+    const imageAspect = state.image.width / state.image.height;
+    
+    let canvasWidth = state.image.width;
+    let canvasHeight = state.image.height;
+    
+    // Scale down if needed
+    if (canvasWidth > maxWidth) {
+        canvasWidth = maxWidth;
+        canvasHeight = maxWidth / imageAspect;
+    }
+    if (canvasHeight > maxHeight) {
+        canvasHeight = maxHeight;
+        canvasWidth = maxHeight * imageAspect;
+    }
+    
+    state.canvas.width = canvasWidth;
+    state.canvas.height = canvasHeight;
+    
+    // Wrapper will automatically size to canvas via CSS
     // Initialize charm physics
     updateCharmBodies();
     
@@ -512,14 +555,80 @@ function updateCharmBodies() {
             });
             
             // Store charm character and size for rendering
-            body.charm = charm;
+        body.charm = charm;
             body.radius = radius;
             body.size = radius * 2;
             
-            state.charmBodies.push(body);
+        state.charmBodies.push(body);
             World.add(state.world, body);
         }
     });
+}
+
+// Get emoji as image using SVG (most reliable cross-browser method)
+function getEmojiImage(emoji, fontSize) {
+    const cacheKey = `${emoji}_${fontSize}`;
+    
+    // Return cached image if available and loaded
+    if (state.emojiCache.has(cacheKey)) {
+        const cached = state.emojiCache.get(cacheKey);
+        if (cached.complete && cached.naturalWidth > 0) {
+            return cached;
+        }
+    }
+    
+    // Create SVG with emoji text - this is the most reliable method
+    const size = Math.ceil(fontSize * 2);
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <text x="50%" y="50%" font-size="${fontSize}" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, EmojiOne Color, Android Emoji, Twemoji Mozilla, emoji, sans-serif" text-anchor="middle" dominant-baseline="central">${emoji}</text>
+        </svg>
+    `.trim();
+    
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    
+    const img = new Image();
+    img.onload = () => {
+        URL.revokeObjectURL(url);
+    };
+    img.onerror = () => {
+        URL.revokeObjectURL(url);
+        console.warn('Failed to load emoji as SVG:', emoji);
+    };
+    img.src = url;
+    
+    // Cache the image
+    state.emojiCache.set(cacheKey, img);
+    return img;
+}
+
+// Helper function to render emoji on canvas
+function renderEmojiOnCanvas(ctx, emoji, x, y, fontSize) {
+    const emojiImage = getEmojiImage(emoji, fontSize);
+    const size = Math.ceil(fontSize * 1.2);
+    
+    // If image is already loaded, draw it immediately
+    if (emojiImage.complete && emojiImage.naturalWidth > 0) {
+        ctx.drawImage(emojiImage, x - size / 2, y - size / 2, size, size);
+    } else {
+        // Wait for image to load, then draw
+        const drawWhenReady = () => {
+            if (emojiImage.complete && emojiImage.naturalWidth > 0) {
+                ctx.drawImage(emojiImage, x - size / 2, y - size / 2, size, size);
+            } else {
+                // Retry after a short delay
+                setTimeout(drawWhenReady, 10);
+            }
+        };
+        emojiImage.onload = drawWhenReady;
+        
+        // Immediate fallback: try text rendering while image loads
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${fontSize}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', emoji, sans-serif`;
+        ctx.fillText(emoji, x, y);
+    }
 }
 
 // Draw charms on canvas (runs every frame, but doesn't recreate bodies)
@@ -539,11 +648,10 @@ function drawCharms() {
         state.ctx.save();
         state.ctx.translate(x, y);
         state.ctx.rotate(body.angle);
-        // Use emoji-friendly font stack for Chrome compatibility
-        state.ctx.font = `${fontSize}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, Arial`;
-        state.ctx.textAlign = 'center';
-        state.ctx.textBaseline = 'middle';
-        state.ctx.fillText(body.charm, 0, 0);
+        
+        // Use improved emoji rendering function
+        renderEmojiOnCanvas(state.ctx, body.charm, 0, 0, fontSize);
+        
         state.ctx.restore();
     });
 }
@@ -554,7 +662,7 @@ function animate() {
     }
     
     if (state.currentStep === 5) {
-        renderCanvas();
+    renderCanvas();
     }
     
     requestAnimationFrame(animate);
@@ -570,38 +678,157 @@ function setupParallax() {
             if (state.currentStep === 5) {
                 tiltX = (e.gamma || 0) / 45;
                 tiltY = (e.beta || 0) / 45;
-                applyParallax(tiltX, tiltY);
+            applyParallax(tiltX, tiltY);
             }
         });
     }
     
     // Mouse move (desktop)
     if (state.canvas) {
-        state.canvas.addEventListener('mousemove', (e) => {
+    state.canvas.addEventListener('mousemove', (e) => {
             if (state.currentStep === 5) {
-                const rect = state.canvas.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                tiltX = (e.clientX - centerX) / (rect.width / 2) * 0.3;
-                tiltY = (e.clientY - centerY) / (rect.height / 2) * 0.3;
-                applyParallax(tiltX, tiltY);
+        const rect = state.canvas.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        tiltX = (e.clientX - centerX) / (rect.width / 2) * 0.3;
+        tiltY = (e.clientY - centerY) / (rect.height / 2) * 0.3;
+        applyParallax(tiltX, tiltY);
             }
-        });
-        
-        state.canvas.addEventListener('mouseleave', () => {
+    });
+    
+    state.canvas.addEventListener('mouseleave', () => {
             if (state.currentStep === 5) {
-                applyParallax(0, 0);
+        applyParallax(0, 0);
+                const wrapper = document.getElementById('holographic-wrapper');
+                if (wrapper) {
+                    wrapper.classList.remove('tilted');
+                }
             }
-        });
+    });
     }
 }
 
 function applyParallax(x, y) {
     if (!state.canvas) return;
+    const wrapper = document.getElementById('holographic-wrapper');
+    if (!wrapper) return;
+    
     const maxTilt = 10;
     const rotateX = y * maxTilt;
     const rotateY = -x * maxTilt;
-    state.canvas.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    
+    // Apply transform to wrapper for holographic effect
+    wrapper.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    
+    // Add tilted class for enhanced holographic effects
+    if (Math.abs(x) > 0.1 || Math.abs(y) > 0.1) {
+        wrapper.classList.add('tilted');
+    } else {
+        wrapper.classList.remove('tilted');
+    }
+    
+    // Update holographic overlay positions based on tilt
+    const shine = wrapper.querySelector('.holo-shine');
+    const glow = wrapper.querySelector('.holo-glow');
+    const sparkle = wrapper.querySelector('.holo-sparkle');
+    
+    if (shine) {
+        const offsetX = rotateY * 2;
+        const offsetY = rotateX * 2;
+        shine.style.backgroundPosition = `${50 + offsetX}% ${50 + offsetY}%`;
+    }
+    
+    if (glow) {
+        const offsetX = rotateY * 5;
+        const offsetY = rotateX * 5;
+        glow.style.backgroundPosition = `${50 + offsetX}% ${50 + offsetY}%`;
+    }
+}
+
+function setupDeviceShakeDetection() {
+    let lastAcceleration = { x: 0, y: 0, z: 0 };
+    let lastTime = Date.now();
+    let motionPermissionGranted = false;
+    
+    function handleDeviceMotion(event) {
+        if (state.currentStep !== 5 || state.charmBodies.length === 0) return;
+        
+        const acceleration = event.accelerationIncludingGravity || event.acceleration;
+        if (!acceleration) return;
+        
+        const currentTime = Date.now();
+        const timeDelta = (currentTime - lastTime) / 1000; // Convert to seconds
+        lastTime = currentTime;
+        
+        if (timeDelta < 0.01) return; // Skip if too fast
+        
+        // Calculate change in acceleration (jerk)
+        const deltaX = acceleration.x - lastAcceleration.x;
+        const deltaY = acceleration.y - lastAcceleration.y;
+        const deltaZ = acceleration.z - lastAcceleration.z;
+        
+        // Calculate magnitude of shake
+        const shakeMagnitude = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        const threshold = 2.0; // Adjust sensitivity
+        
+        if (shakeMagnitude > threshold) {
+            // Apply forces based on actual device movement
+            const Body = Matter.Body;
+            const forceMultiplier = Math.min(shakeMagnitude / 10, 0.3); // Cap max force
+            
+            state.charmBodies.forEach(body => {
+                // Map device acceleration to canvas forces
+                // Invert Y because screen Y is opposite to gravity Y
+                const forceX = deltaX * forceMultiplier * 0.1;
+                const forceY = -deltaY * forceMultiplier * 0.1; // Inverted
+                
+                Body.applyForce(body, body.position, {
+                    x: forceX,
+                    y: forceY
+                });
+            });
+            
+            // Play sound effect on significant shake
+            if (shakeMagnitude > threshold * 1.5) {
+                playShakeSound();
+            }
+            
+            if (window.plausible && !state.isShaking) {
+                window.plausible('ShakeTriggered');
+                state.isShaking = true;
+                setTimeout(() => { state.isShaking = false; }, 1000);
+            }
+        }
+        
+        lastAcceleration = {
+            x: acceleration.x || 0,
+            y: acceleration.y || 0,
+            z: acceleration.z || 0
+        };
+    }
+    
+    // Request permission for iOS 13+ on user interaction
+    if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
+        // Permission will be requested when user first interacts
+        const requestPermissionOnInteraction = function() {
+            DeviceMotionEvent.requestPermission()
+                .then(response => {
+                    if (response === 'granted') {
+                        motionPermissionGranted = true;
+                        window.addEventListener('devicemotion', handleDeviceMotion);
+                    }
+                })
+                .catch(console.error);
+            // Remove listener after first interaction
+            document.removeEventListener('click', requestPermissionOnInteraction);
+            document.removeEventListener('touchstart', requestPermissionOnInteraction);
+        };
+        document.addEventListener('click', requestPermissionOnInteraction, { once: true });
+        document.addEventListener('touchstart', requestPermissionOnInteraction, { once: true });
+    } else if (window.DeviceMotionEvent) {
+        // Android and older iOS - no permission needed
+        window.addEventListener('devicemotion', handleDeviceMotion);
+    }
 }
 
 function triggerShake() {
@@ -631,11 +858,11 @@ function triggerShake() {
             });
         } else {
             // Normal random shake
-            const angle = Math.random() * Math.PI * 2;
-            Body.applyForce(body, body.position, {
-                x: Math.cos(angle) * force,
-                y: Math.sin(angle) * force
-            });
+        const angle = Math.random() * Math.PI * 2;
+        Body.applyForce(body, body.position, {
+            x: Math.cos(angle) * force,
+            y: Math.sin(angle) * force
+        });
         }
     });
     
@@ -727,9 +954,9 @@ function copyShareLink() {
         });
     } else {
         // Fallback for older browsers
-        linkInput.select();
-        document.execCommand('copy');
-        alert('Link copied to clipboard!');
+    linkInput.select();
+    document.execCommand('copy');
+    alert('Link copied to clipboard!');
     }
 }
 

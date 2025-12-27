@@ -65,6 +65,12 @@ Shareable links encode the entire card state (image, filter, charms) in the URL 
 
 See LICENSE file for details.
 
+## ? Credits
+
+- **Holographic Effects**: Inspired by [Pokemon Cards CSS](https://github.com/simeydotme/pokemon-cards-css) by [@simeydotme](https://github.com/simeydotme)
+  - Uses CSS Transforms, Gradients, Blend-modes and Filters to simulate Holofoil effects
+  - Original project: https://poke-holo.simey.me/
+
 ---
 
 Made with ? for shaker card lovers
