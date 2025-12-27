@@ -1,0 +1,47 @@
+{
+  "project": "ShakeCard Web App",
+  "description": "A mobile-first static web app that lets users upload a photo, apply filters, add emoji/symbol charms, and generate live shaker photo cards with parallax and physics-based animations. Must be deployable on GitHub Pages or Netlify and shareable via link.",
+  "techStack": ["HTML", "Tailwind CSS", "Vanilla JavaScript", "Canvas API", "matter.js", "shake.js", "CCapture.js"],
+  "rules": [
+    {
+      "context": "HTML structure",
+      "rule": "Use semantic HTML5 layout (header, main, footer). Ensure mobile-first responsiveness with Tailwind."
+    },
+    {
+      "context": "Image upload",
+      "rule": "Restrict upload to .jpg/.png/.webp. Limit size to 3MB. Resize images to max 720px width using canvas before rendering."
+    },
+    {
+      "context": "Filter system",
+      "rule": "Implement 5 visual filters (ccd, mono, blur, glow sparkle, 8k) using CSS filters or canvas effects."
+    },
+    {
+      "context": "Charm picker",
+      "rule": "Allow input of up to 5 emoji or special characters. Provide quick-pick preset buttons for color-based charm sets."
+    },
+    {
+      "context": "Animation",
+      "rule": "Use DeviceOrientation or mousemove for parallax. Use matter.js for gravity and bounce physics of emoji charms. Use shake.js or button for triggering a simulated shake."
+    },
+    {
+      "context": "Export",
+      "rule": "Use CCapture.js to export a 5-second .webm animation showing shake movement with ease-in-out."
+    },
+    {
+      "context": "Shareability",
+      "rule": "Encode current card settings in URL hash. On load, decode hash to restore photo, filter, and charms. Ensure the generated link is fully functional and live."
+    },
+    {
+      "context": "Analytics",
+      "rule": "Use Plausible Analytics. Add <script> in <head> and trigger custom events like PhotocardCreated, ShakeTriggered, and VideoExported."
+    },
+    {
+      "context": "Deployment",
+      "rule": "Ensure the app is deployable as a static site on GitHub Pages or Netlify with no backend dependencies."
+    },
+    {
+      "context": "UI/UX",
+      "rule": "Design should be MAC OS-style ¡V clean, rounded, white/grey background, swipeable filters, large touchable areas, centered canvas."
+    }
+  ]
+}
