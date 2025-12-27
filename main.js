@@ -203,6 +203,9 @@ function setupEventListeners() {
     });
     document.getElementById('step-4-back').addEventListener('click', () => goToStep(3));
     document.getElementById('step-4-done').addEventListener('click', () => {
+        // Track "Generate Card" event
+        if (window.plausible) window.plausible('GenerateCard');
+        
         goToStep('loading');
         setTimeout(() => {
             goToStep(5);

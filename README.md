@@ -50,12 +50,27 @@ Create interactive, shareable shaker-style photo cards with emoji charms, filter
 
 ## ? Analytics
 
-This app uses Plausible Analytics for privacy-friendly tracking. Events tracked:
+This app uses Plausible Analytics for privacy-friendly tracking.
+
+### Page Views
+- **Automatic**: Plausible automatically tracks all page visits to your site
+
+### Custom Events Tracked:
+- `GenerateCard` - When user clicks "Create Card" button (final step)
+- `CardCreated` - When the final card view is initialized
 - `PhotocardCreated` - When a user uploads an image
-- `FilterChanged` - When a filter is applied
-- `ShakeTriggered` - When shake is activated
 - `CardShared` - When a share link is generated
+- `ShakeTriggered` - When shake is activated (button or device motion)
 - `VideoExported` - When a video is exported
+
+### Viewing Analytics:
+1. Go to [Plausible Analytics Dashboard](https://plausible.io/shakecard.live)
+2. Sign in with your Plausible account
+3. View:
+   - **Page views**: Total visitors and page views
+   - **Events**: Click on "Events" tab to see custom event counts
+   - **CardShared**: Counts how many times share links were generated
+   - **GenerateCard**: Counts how many cards were created
 
 ## ? Shareable Links
 
