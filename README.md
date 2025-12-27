@@ -9,7 +9,7 @@ Create interactive, shareable shaker-style photo cards with emoji charms, filter
 
 - ? Upload images (JPG, PNG, WEBP - max 3MB)
 - ? Apply visual filters (CCD, Mono, Blur, Glow, 8K)
-- ? Add up to 5 emoji/symbol charms
+- ? Add up to 15 emoji/symbol charms
 - ? Shake effect with physics simulation
 - ? Parallax tilt effects (device orientation or mouse)
 - ? Generate shareable links

@@ -17,7 +17,7 @@
     },
     {
       "context": "Charm picker",
-      "rule": "Allow input of up to 5 emoji or special characters. Provide quick-pick preset buttons for color-based charm sets."
+      "rule": "Allow input of up to 15 emoji or special characters. Provide quick-pick preset buttons for color-based charm sets."
     },
     {
       "context": "Animation",
