@@ -1,3 +1,15 @@
+// Google Analytics helper function
+function trackEvent(eventName, eventParams = {}) {
+    // Track in Google Analytics 4
+    if (typeof gtag !== 'undefined') {
+        gtag('event', eventName, eventParams);
+    }
+    // Also track in Plausible (if you want to keep both)
+    if (window.plausible) {
+        window.plausible(eventName);
+    }
+}
+
 // State management
 const state = {
     image: null,
@@ -204,7 +216,7 @@ function setupEventListeners() {
     document.getElementById('step-4-back').addEventListener('click', () => goToStep(3));
     document.getElementById('step-4-done').addEventListener('click', () => {
         // Track "Generate Card" event
-        if (window.plausible) window.plausible('GenerateCard');
+        trackEvent('GenerateCard');
         
         goToStep('loading');
         setTimeout(() => {
@@ -342,7 +354,7 @@ function handleImageUpload(e) {
             document.getElementById('step-1-next').disabled = false;
             document.getElementById('upload-status').textContent = `${width} กั ${height} pixels`;
             
-            if (window.plausible) window.plausible('PhotocardCreated');
+            trackEvent('PhotocardCreated');
         };
         
         img.src = event.target.result;
@@ -489,8 +501,6 @@ function initializeFinalView() {
     
     // Initialize and play background music
     initializeBackgroundMusic();
-    
-    if (window.plausible) window.plausible('CardCreated');
 }
 
 // Initialize background music
@@ -966,7 +976,6 @@ function setupDeviceShakeDetection() {
             }
             
             if (window.plausible && !state.isShaking) {
-                window.plausible('ShakeTriggered');
                 state.isShaking = true;
                 setTimeout(() => { state.isShaking = false; }, 1000);
             }
@@ -1041,7 +1050,6 @@ function triggerShake() {
     // Play shake sound effect
     playShakeSound();
     
-    if (window.plausible) window.plausible('ShakeTriggered');
     
     setTimeout(() => {
         state.isShaking = false;
@@ -1110,7 +1118,7 @@ function generateShareLink() {
     document.getElementById('share-link').value = shareUrl;
     document.getElementById('share-modal').classList.remove('hidden');
     
-    if (window.plausible) window.plausible('CardShared');
+    trackEvent('CardShared');
 }
 
 function copyShareLink() {
@@ -1270,7 +1278,7 @@ async function exportVideo() {
         state.mediaRecorder = null;
         stream.getTracks().forEach(track => track.stop());
         
-        if (window.plausible) window.plausible('VideoExported');
+        trackEvent('VideoExported');
         alert(`Video export complete! Downloaded as ${fileExtension.toUpperCase()}.`);
     };
     
@@ -1379,5 +1387,5 @@ function resetToStart() {
     // Go back to welcome screen
     goToStep(0);
     
-    if (window.plausible) window.plausible('NewCardStarted');
+    trackEvent('NewCardStarted');
 }

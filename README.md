@@ -50,27 +50,45 @@ Create interactive, shareable shaker-style photo cards with emoji charms, filter
 
 ## ? Analytics
 
-This app uses Plausible Analytics for privacy-friendly tracking.
+This app uses both **Google Analytics 4** (free) and **Plausible Analytics** for tracking.
+
+### Setting Up Google Analytics 4 (Free)
+
+1. Go to [Google Analytics](https://analytics.google.com/)
+2. Sign in with your Google account (works with Google Dev Student accounts)
+3. Click "Start measuring" or create a new property
+4. Fill in your property details (name, timezone, currency)
+5. Get your **Measurement ID** (format: `G-XXXXXXXXXX`)
+6. In `index.html`, replace `G-XXXXXXXXXX` with your actual Measurement ID:
+   ```html
+   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+   ```
+7. View your analytics at [analytics.google.com](https://analytics.google.com/)
 
 ### Page Views
-- **Automatic**: Plausible automatically tracks all page visits to your site
+- **Automatic**: Both GA4 and Plausible automatically track all page visits
 
 ### Custom Events Tracked:
 - `GenerateCard` - When user clicks "Create Card" button (final step)
-- `CardCreated` - When the final card view is initialized
 - `PhotocardCreated` - When a user uploads an image
 - `CardShared` - When a share link is generated
-- `ShakeTriggered` - When shake is activated (button or device motion)
 - `VideoExported` - When a video is exported
+- `NewCardStarted` - When user clicks "Make Another One"
 
 ### Viewing Analytics:
+
+**Google Analytics 4:**
+1. Go to [analytics.google.com](https://analytics.google.com/)
+2. Select your property
+3. Go to **Reports** ¡÷ **Engagement** ¡÷ **Events** to see custom events
+4. Go to **Reports** ¡÷ **Realtime** to see live visitors
+
+**Plausible Analytics:**
 1. Go to [Plausible Analytics Dashboard](https://plausible.io/shakecard.live)
 2. Sign in with your Plausible account
 3. View:
    - **Page views**: Total visitors and page views
    - **Events**: Click on "Events" tab to see custom event counts
-   - **CardShared**: Counts how many times share links were generated
-   - **GenerateCard**: Counts how many cards were created
 
 ## ? Shareable Links
 
