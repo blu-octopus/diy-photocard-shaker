@@ -11,12 +11,16 @@ const state = {
     previewCtx2: null,
     previewCanvas3: null,
     previewCtx3: null,
+    previewCanvas4: null,
+    previewCtx4: null,
     charmBodies: [],
     walls: [],
     isShaking: false,
     capturer: null,
     lastCharmHash: '',
-    currentStep: 0
+    currentStep: 0,
+    customMessage: '',
+    audioContext: null
 };
 
 // Initialize
@@ -30,6 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     state.previewCanvas3 = document.getElementById('preview-canvas-3');
     state.previewCtx3 = state.previewCanvas3?.getContext('2d');
+    
+    state.previewCanvas4 = document.getElementById('preview-canvas-4');
+    state.previewCtx4 = state.previewCanvas4?.getContext('2d');
+    
+    // Initialize Audio Context for sound effects
+    try {
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+        console.warn('Audio context not supported:', e);
+    }
     
     // Initialize Matter.js
     const Engine = Matter.Engine;
@@ -136,18 +150,27 @@ function setupEventListeners() {
     });
     
     document.getElementById('step-3-back').addEventListener('click', () => goToStep(2));
-    document.getElementById('step-3-done').addEventListener('click', () => {
+    document.getElementById('step-3-next').addEventListener('click', () => goToStep(4));
+    
+    // Step 4: Text Message
+    document.getElementById('custom-message-input').addEventListener('input', (e) => {
+        state.customMessage = e.target.value;
+        renderPreviewCanvas(4);
+    });
+    document.getElementById('step-4-back').addEventListener('click', () => goToStep(3));
+    document.getElementById('step-4-done').addEventListener('click', () => {
         goToStep('loading');
         setTimeout(() => {
-            goToStep(4);
+            goToStep(5);
             initializeFinalView();
         }, 1500);
     });
     
-    // Step 4: Final view
+    // Step 5: Final view
     document.getElementById('share-btn').addEventListener('click', generateShareLink);
     document.getElementById('download-video-btn').addEventListener('click', exportVideo);
     document.getElementById('shake-btn').addEventListener('click', triggerShake);
+    document.getElementById('make-another-btn').addEventListener('click', resetToStart);
     document.getElementById('copy-link-btn').addEventListener('click', copyShareLink);
     document.getElementById('close-share-modal').addEventListener('click', () => {
         document.getElementById('share-modal').classList.add('hidden');
@@ -172,13 +195,13 @@ function goToStep(step) {
     
     state.currentStep = step;
     
-    // Show progress bar for steps 1-3
+    // Show progress bar for steps 1-4
     const progressContainer = document.getElementById('progress-container');
-    if (step >= 1 && step <= 3) {
+    if (step >= 1 && step <= 4) {
         progressContainer.style.display = 'block';
-        updateProgress((step / 3) * 100);
+        updateProgress((step / 4) * 100);
         document.getElementById('current-step-num').textContent = step;
-        const labels = ['', 'Upload Image', 'Choose Filter', 'Add Charms'];
+        const labels = ['', 'Upload Image', 'Choose Filter', 'Add Charms', 'Add Message'];
         document.getElementById('step-label').textContent = labels[step];
     } else {
         progressContainer.style.display = 'none';
@@ -191,11 +214,13 @@ function goToStep(step) {
         currentStepEl.classList.add('active');
     }
     
-    // Render previews when entering steps 2 or 3
+    // Render previews when entering steps 2, 3, or 4
     if (step === 2) {
         setTimeout(() => renderPreviewCanvas(2), 100);
     } else if (step === 3) {
         setTimeout(() => renderPreviewCanvas(3), 100);
+    } else if (step === 4) {
+        setTimeout(() => renderPreviewCanvas(4), 100);
     }
 }
 
@@ -256,14 +281,14 @@ function handleImageUpload(e) {
             
             state.image = resizedCanvas;
             
-            // Update preview
+            // Update preview (small preview with confirmation)
             const previewImg = document.getElementById('upload-preview-img');
             previewImg.src = resizedCanvas.toDataURL();
             document.getElementById('upload-preview').classList.remove('hidden');
             
             // Enable next button
             document.getElementById('step-1-next').disabled = false;
-            document.getElementById('upload-status').textContent = `? Image loaded (${width}x${height})`;
+            document.getElementById('upload-status').textContent = `${width} กั ${height} pixels`;
             
             if (window.plausible) window.plausible('PhotocardCreated');
         };
@@ -284,6 +309,9 @@ function renderPreviewCanvas(step) {
     } else if (step === 3) {
         canvas = state.previewCanvas3;
         ctx = state.previewCtx3;
+    } else if (step === 4) {
+        canvas = state.previewCanvas4;
+        ctx = state.previewCtx4;
     } else {
         return;
     }
@@ -313,7 +341,7 @@ function renderPreviewCanvas(step) {
     ctx.restore();
     
     // For step 3, also draw charms preview (static, showing ~20 objects concept)
-    if (step === 3 && state.charms.length > 0) {
+    if ((step === 3 || step === 4) && state.charms.length > 0) {
         const targetCount = 20;
         const objectsPerChar = Math.ceil(targetCount / state.charms.length);
         let drawn = 0;
@@ -322,15 +350,16 @@ function renderPreviewCanvas(step) {
             for (let i = 0; i < objectsPerChar && drawn < targetCount; i++) {
                 const baseSize = 20;
                 const sizeVariation = (Math.random() - 0.5) * 10;
-                const fontSize = baseSize + sizeVariation;
-                
-                const x = Math.random() * (canvas.width - 40) + 20;
-                const y = Math.random() * (canvas.height * 0.6) + 50;
-                
-                ctx.font = `${fontSize}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(charm, x, y);
+        const fontSize = baseSize + sizeVariation;
+        
+        const x = Math.random() * (canvas.width - 40) + 20;
+        const y = Math.random() * (canvas.height * 0.6) + 50;
+        
+        // Use emoji-friendly font stack for preview
+        ctx.font = `${fontSize}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(charm, x, y);
                 drawn++;
             }
         });
@@ -371,6 +400,15 @@ function initializeFinalView() {
     
     // Render initial canvas
     renderCanvas();
+    
+    // Display custom message if provided
+    const messageDisplay = document.getElementById('custom-message-display');
+    if (state.customMessage && state.customMessage.trim()) {
+        messageDisplay.style.display = 'block';
+        messageDisplay.querySelector('p').textContent = state.customMessage;
+    } else {
+        messageDisplay.style.display = 'none';
+    }
     
     if (window.plausible) window.plausible('CardCreated');
 }
@@ -501,7 +539,8 @@ function drawCharms() {
         state.ctx.save();
         state.ctx.translate(x, y);
         state.ctx.rotate(body.angle);
-        state.ctx.font = `${fontSize}px Arial`;
+        // Use emoji-friendly font stack for Chrome compatibility
+        state.ctx.font = `${fontSize}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, Arial`;
         state.ctx.textAlign = 'center';
         state.ctx.textBaseline = 'middle';
         state.ctx.fillText(body.charm, 0, 0);
@@ -510,11 +549,11 @@ function drawCharms() {
 }
 
 function animate() {
-    if (state.engine && state.currentStep === 4) {
+    if (state.engine && state.currentStep === 5) {
         Matter.Engine.update(state.engine);
     }
     
-    if (state.currentStep === 4) {
+    if (state.currentStep === 5) {
         renderCanvas();
     }
     
@@ -528,7 +567,7 @@ function setupParallax() {
     // Device orientation
     if (window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', (e) => {
-            if (state.currentStep === 4) {
+            if (state.currentStep === 5) {
                 tiltX = (e.gamma || 0) / 45;
                 tiltY = (e.beta || 0) / 45;
                 applyParallax(tiltX, tiltY);
@@ -539,7 +578,7 @@ function setupParallax() {
     // Mouse move (desktop)
     if (state.canvas) {
         state.canvas.addEventListener('mousemove', (e) => {
-            if (state.currentStep === 4) {
+            if (state.currentStep === 5) {
                 const rect = state.canvas.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
@@ -550,7 +589,7 @@ function setupParallax() {
         });
         
         state.canvas.addEventListener('mouseleave', () => {
-            if (state.currentStep === 4) {
+            if (state.currentStep === 5) {
                 applyParallax(0, 0);
             }
         });
@@ -566,26 +605,88 @@ function applyParallax(x, y) {
 }
 
 function triggerShake() {
-    if (state.isShaking || state.charmBodies.length === 0 || state.currentStep !== 4) return;
+    if (state.isShaking || state.charmBodies.length === 0 || state.currentStep !== 5) return;
     
     state.isShaking = true;
     const Body = Matter.Body;
-    const force = 0.15;
+    const force = 0.12; // Slightly reduced to prevent corner sticking
     
-    // Apply random forces to all charms
+    // Apply random forces to all charms, but avoid corners
     state.charmBodies.forEach(body => {
-        const angle = Math.random() * Math.PI * 2;
-        Body.applyForce(body, body.position, {
-            x: Math.cos(angle) * force,
-            y: Math.sin(angle) * force
-        });
+        // Calculate distance from center
+        const centerX = state.canvas.width / 2;
+        const centerY = state.canvas.height / 2;
+        const dx = body.position.x - centerX;
+        const dy = body.position.y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+        
+        // If too close to corner, push toward center
+        if (distance > maxDistance * 0.7) {
+            const angleToCenter = Math.atan2(-dy, -dx);
+            const randomVariation = (Math.random() - 0.5) * 0.5;
+            Body.applyForce(body, body.position, {
+                x: Math.cos(angleToCenter + randomVariation) * force * 0.8,
+                y: Math.sin(angleToCenter + randomVariation) * force * 0.8
+            });
+        } else {
+            // Normal random shake
+            const angle = Math.random() * Math.PI * 2;
+            Body.applyForce(body, body.position, {
+                x: Math.cos(angle) * force,
+                y: Math.sin(angle) * force
+            });
+        }
     });
+    
+    // Play shake sound effect
+    playShakeSound();
     
     if (window.plausible) window.plausible('ShakeTriggered');
     
     setTimeout(() => {
         state.isShaking = false;
     }, 500);
+}
+
+function playShakeSound() {
+    if (!state.audioContext) return;
+    
+    try {
+        // Create a shaker-like sound effect using Web Audio API
+        const oscillator = state.audioContext.createOscillator();
+        const gainNode = state.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(state.audioContext.destination);
+        
+        // Create a "shake" sound - multiple quick tones
+        const frequencies = [200, 250, 300, 350];
+        const duration = 0.1;
+        let currentTime = state.audioContext.currentTime;
+        
+        frequencies.forEach((freq, index) => {
+            const osc = state.audioContext.createOscillator();
+            const gain = state.audioContext.createGain();
+            
+            osc.connect(gain);
+            gain.connect(state.audioContext.destination);
+            
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(0, currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.01, currentTime + duration);
+            
+            osc.start(currentTime);
+            osc.stop(currentTime + duration);
+            
+            currentTime += duration * 0.5;
+        });
+    } catch (e) {
+        console.warn('Sound effect failed:', e);
+    }
 }
 
 function generateShareLink() {
@@ -598,7 +699,8 @@ function generateShareLink() {
     const stateData = {
         filter: state.filter,
         charms: state.charms.join(''),
-        image: state.image.toDataURL('image/jpeg', 0.8)
+        image: state.image.toDataURL('image/jpeg', 0.8),
+        message: state.customMessage || ''
     };
     
     const encoded = btoa(JSON.stringify(stateData));
@@ -658,8 +760,11 @@ function loadFromHash() {
             // Load charms
             state.charms = decoded.charms ? decoded.charms.split('') : [];
             
+            // Load custom message
+            state.customMessage = decoded.message || '';
+            
             // Go directly to final view
-            goToStep(4);
+            goToStep(5);
             setTimeout(() => {
                 initializeFinalView();
             }, 100);
@@ -686,11 +791,15 @@ function exportVideo() {
         return;
     }
     
+    // Use MP4 format for better social media compatibility
+    // Note: CCapture primarily supports webm, but we'll use webm and suggest conversion
+    // For true MP4, would need additional library, but webm works on most platforms
     const capturer = new CCapture({
         format: 'webm',
         framerate: 30,
         quality: 90,
-        name: 'shakecard-animation'
+        name: 'shakecard-animation',
+        verbose: false
     });
     
     state.capturer = capturer;
@@ -731,7 +840,7 @@ function exportVideo() {
             state.capturer = null;
             
             if (window.plausible) window.plausible('VideoExported');
-            alert('Video export complete!');
+            alert('Video export complete! The .webm file can be shared on most social media platforms. For Instagram/TikTok, you may need to convert to MP4 using an online converter.');
         }
     };
     
@@ -740,4 +849,48 @@ function exportVideo() {
 
 function easeInOut(t) {
     return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+function resetToStart() {
+    // Reset all state
+    state.image = null;
+    state.filter = 'none';
+    state.charms = [];
+    state.customMessage = '';
+    state.lastCharmHash = '';
+    
+    // Clear charm bodies and walls
+    if (state.charmBodies && state.charmBodies.length > 0) {
+        state.charmBodies.forEach(body => Matter.World.remove(state.world, body));
+    }
+    if (state.walls && state.walls.length > 0) {
+        state.walls.forEach(wall => Matter.World.remove(state.world, wall));
+    }
+    state.charmBodies = [];
+    state.walls = [];
+    
+    // Reset UI elements
+    const uploadInput = document.getElementById('image-upload');
+    if (uploadInput) uploadInput.value = '';
+    const uploadPreview = document.getElementById('upload-preview');
+    if (uploadPreview) uploadPreview.classList.add('hidden');
+    const charmInput = document.getElementById('charm-input');
+    if (charmInput) charmInput.value = '';
+    const messageInput = document.getElementById('custom-message-input');
+    if (messageInput) messageInput.value = '';
+    
+    // Hide message display
+    const messageDisplay = document.getElementById('custom-message-display');
+    if (messageDisplay) messageDisplay.style.display = 'none';
+    
+    // Reset filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.filter === 'none') btn.classList.add('active');
+    });
+    
+    // Go back to welcome screen
+    goToStep(0);
+    
+    if (window.plausible) window.plausible('NewCardStarted');
 }

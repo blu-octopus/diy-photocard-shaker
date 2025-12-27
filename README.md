@@ -2,6 +2,7 @@
 upload your favorite photocard to make them into a digital shaker charm!
 
 -----*below content are written with AI assistant*-----
+
 Create interactive, shareable shaker-style photo cards with emoji charms, filters, and physics-based animations.
 
 ## ? Features
@@ -41,10 +42,11 @@ Create interactive, shareable shaker-style photo cards with emoji charms, filter
 ## ? Preset Charm Sets
 
 - **Blue Set**: ??????
-- **Green Set**: ?????
+- **Green Set**: ????
 - **Yellow Set**: ?????
-- **Soft Pink**: ?????
+- **Soft Pink**: ????¡ñ????
 - **Grunge Set**: ?????????
+- **Red Set**: ??£¿ ? ??? ? ?£½?
 
 ## ? Analytics
 
