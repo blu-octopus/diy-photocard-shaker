@@ -37,10 +37,17 @@ const state = {
     emojiCanvas: null, // Temporary canvas for rendering emojis
     emojiCtx: null,
     mediaRecorder: null,
-    charmColor: '#4A90E2', // Default blue color for charms
+    charmColor: '#7ED321', // Default green color for charms (rainbow order)
     backgroundMusic: null, // Background music audio element
     musicMuted: false, // Music mute state
-    previewCharmPositions: [] // Store charm positions for preview to prevent regeneration
+    uiVisible: true, // UI visibility state (action bar visible/hidden)
+    previewCharmPositions: [], // Store charm positions for preview to prevent regeneration
+    homeBgCanvas: null, // Background charms canvas for home page
+    homeBgCtx: null,
+    homeBgBodies: [], // Physics bodies for background charms
+    homeBgEngine: null, // Separate physics engine for background
+    homeBgWorld: null,
+    homeBgAnimationId: null // Animation frame ID for background
 };
 
 // Wait for fonts to load before initializing
@@ -73,6 +80,39 @@ async function initializeApp() {
     state.emojiCanvas.height = 100;
     state.emojiCtx = state.emojiCanvas.getContext('2d');
     
+    // Initialize home page background charms canvas
+    state.homeBgCanvas = document.getElementById('home-bg-charms');
+    if (state.homeBgCanvas) {
+        state.homeBgCtx = state.homeBgCanvas.getContext('2d');
+        // Set canvas size to match viewport
+        const resizeHomeBg = () => {
+            if (!state.homeBgCanvas) return;
+            state.homeBgCanvas.width = window.innerWidth;
+            state.homeBgCanvas.height = window.innerHeight;
+            // Update physics world boundaries if engine exists
+            if (state.homeBgEngine && state.homeBgWorld) {
+                // Remove old walls and recreate
+                if (state.homeBgBodies.length > 0) {
+                    // Walls are stored separately, but we'll recreate them
+                    const World = Matter.World;
+                    const Bodies = Matter.Bodies;
+                    const wallThickness = 100;
+                    const canvasWidth = state.homeBgCanvas.width;
+                    const canvasHeight = state.homeBgCanvas.height;
+                    
+                    // Clear old walls (they're static, so we'll just recreate the world boundaries)
+                    // For simplicity, we'll just update the canvas size
+                    // The walls are positioned outside viewport so they should still work
+                }
+            }
+        };
+        resizeHomeBg();
+        window.addEventListener('resize', resizeHomeBg);
+        
+        // Initialize background physics
+        initializeHomeBackgroundCharms();
+    }
+    
     // Initialize Audio Context for sound effects
     try {
         state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -86,7 +126,7 @@ async function initializeApp() {
     
     state.engine = Engine.create();
     state.world = state.engine.world;
-    state.engine.world.gravity.y = 0.8;
+    state.engine.world.gravity.y = 0.3; // Reduced gravity for slower, oil-like movement
     
     // Setup event listeners
     setupEventListeners();
@@ -99,6 +139,9 @@ async function initializeApp() {
     
     // Initialize shake detection - use DeviceMotionEvent for real shake detection
     setupDeviceShakeDetection();
+    
+    // Setup home page card tilt effect
+    setupHomeCardTilt();
     
     // Also use shake.js as fallback
     if (typeof Shake !== 'undefined') {
@@ -289,9 +332,19 @@ function setupEventListeners() {
     if (soundToggleBtn) {
         soundToggleBtn.addEventListener('click', toggleMusic);
     }
+    
+    // Visibility toggle for action bar
+    const visibilityToggleBtn = document.getElementById('visibility-toggle-btn');
+    if (visibilityToggleBtn) {
+        visibilityToggleBtn.addEventListener('click', toggleActionBarVisibility);
+    }
     const copyLinkBtn = document.getElementById('copy-link-btn');
     if (copyLinkBtn) {
         copyLinkBtn.addEventListener('click', copyShareLink);
+    }
+    const shortenUrlBtn = document.getElementById('shorten-url-btn');
+    if (shortenUrlBtn) {
+        shortenUrlBtn.addEventListener('click', handleShortenUrl);
     }
     const closeShareModal = document.getElementById('close-share-modal');
     if (closeShareModal) {
@@ -364,6 +417,20 @@ function goToStep(step) {
         setTimeout(() => renderPreviewCanvas(3), 100);
     } else if (step === 4) {
         setTimeout(() => renderPreviewCanvas(4), 100);
+    }
+    
+    // Start/stop background animation based on step
+    if (step === 0) {
+        // Start background animation if not already running
+        if (!state.homeBgAnimationId && state.homeBgCanvas) {
+            animateHomeBackground();
+        }
+    } else {
+        // Stop background animation when leaving home page
+        if (state.homeBgAnimationId) {
+            cancelAnimationFrame(state.homeBgAnimationId);
+            state.homeBgAnimationId = null;
+        }
     }
 }
 
@@ -523,9 +590,10 @@ function renderPreviewCanvas(step) {
         if (needsRegeneration) {
             // Generate new positions
             state.previewCharmPositions = [];
-            const targetCount = Math.max(20, state.charms.length * 2);
-            const objectsPerChar = Math.ceil(targetCount / state.charms.length);
+            // Each character appears 3 times
+            const objectsPerChar = 3;
             let drawn = 0;
+            const targetCount = state.charms.length * objectsPerChar;
             
             state.charms.forEach((charm, charmIndex) => {
                 for (let i = 0; i < objectsPerChar && drawn < targetCount; i++) {
@@ -537,7 +605,7 @@ function renderPreviewCanvas(step) {
                     const y = Math.random() * (canvas.height * 0.6) + 50;
                     
                     // Get color for rainbow mode
-                    let color = state.charmColor || '#4A90E2';
+                    let color = state.charmColor || '#7ED321';
                     if (color === 'rainbow') {
                         color = getRainbowColor(charmIndex);
                     }
@@ -695,6 +763,29 @@ function updateSoundIcon() {
     }
 }
 
+// Toggle action bar visibility
+function toggleActionBarVisibility() {
+    const actionBar = document.querySelector('#step-5 .action-bar');
+    const visibilityIcon = document.getElementById('visibility-icon');
+    
+    if (!actionBar || !visibilityIcon) return;
+    
+    // Toggle visibility
+    if (actionBar.style.display === 'none') {
+        actionBar.style.display = '';
+        state.uiVisible = true;
+        visibilityIcon.textContent = 'visibility';
+        visibilityIcon.classList.remove('text-gray-400');
+        visibilityIcon.classList.add('text-gray-700');
+    } else {
+        actionBar.style.display = 'none';
+        state.uiVisible = false;
+        visibilityIcon.textContent = 'visibility_off';
+        visibilityIcon.classList.remove('text-gray-700');
+        visibilityIcon.classList.add('text-gray-400');
+    }
+}
+
 function renderCanvas() {
     if (!state.image || !state.ctx) {
         if (state.ctx) {
@@ -803,13 +894,12 @@ function updateCharmBodies() {
     state.walls = walls;
     World.add(state.world, walls);
     
-    // Generate charm objects: input length * 2 (minimum 20)
-    // Each character appears multiple times with size variation
-    const targetCount = Math.max(20, state.charms.length * 2);
-    const objectsPerChar = Math.ceil(targetCount / state.charms.length);
+    // Generate charm objects: each character generates exactly 3 objects
+    const objectsPerChar = 3;
+    const targetCount = state.charms.length * objectsPerChar;
     
     state.charms.forEach((charm, charIndex) => {
-        for (let i = 0; i < objectsPerChar && state.charmBodies.length < targetCount; i++) {
+        for (let i = 0; i < objectsPerChar; i++) {
             // Size variation: base size 25-50px (up to 50% variation from base 30px)
             const baseSize = 30;
             const sizeVariation = (Math.random() - 0.5) * 25; // -12.5 to +12.5 (up to ~42% variation)
@@ -819,12 +909,12 @@ function updateCharmBodies() {
             const x = Math.random() * (canvasWidth - 100) + 50;
             const y = Math.random() * (canvasHeight * 0.3) + 20; // Start in upper third
             
-            // Create circular body with physics properties for shaker charm effect
+            // Create circular body with physics properties for oil-like slow flow
             const body = Bodies.circle(x, y, radius, {
-                restitution: 0.6, // Bounce off walls
-                friction: 0.05,   // Low friction for smooth movement
-                frictionAir: 0.01, // Air resistance
-                density: 0.0008,  // Lightweight for floating effect
+                restitution: 0.3, // Less bouncy, more dampened
+                friction: 0.1,   // Slightly more friction
+                frictionAir: 0.15, // High air resistance for slow, oil-like movement
+                density: 0.001,  // Slightly heavier for slower fall
                 chamfer: { radius: 2 } // Slightly rounded edges
             });
             
@@ -857,7 +947,7 @@ function getRainbowColor(index) {
 
 // Get emoji as image using SVG (most reliable cross-browser method)
 function getEmojiImage(emoji, fontSize, colorOverride = null) {
-    let color = colorOverride || state.charmColor || '#4A90E2';
+    let color = colorOverride || state.charmColor || '#7ED321';
     
     // Handle rainbow color
     if (color === 'rainbow') {
@@ -903,7 +993,7 @@ function getEmojiImage(emoji, fontSize, colorOverride = null) {
 
 // Helper function to render emoji on canvas
 function renderEmojiOnCanvas(ctx, emoji, x, y, fontSize, colorOverride = null) {
-    let color = colorOverride || state.charmColor || '#4A90E2';
+    let color = colorOverride || state.charmColor || '#7ED321';
     
     // Handle rainbow color - generate pastel color based on charm character
     if (color === 'rainbow') {
@@ -1070,6 +1160,189 @@ function applyParallax(x, y) {
         const offsetX = rotateY * 5;
         const offsetY = rotateX * 5;
         glow.style.backgroundPosition = `${50 + offsetX}% ${50 + offsetY}%`;
+    }
+}
+
+// Initialize background charms for home page
+function initializeHomeBackgroundCharms() {
+    if (!state.homeBgCanvas || !state.homeBgCtx) return;
+    
+    const Engine = Matter.Engine;
+    const World = Matter.World;
+    const Bodies = Matter.Bodies;
+    
+    // Create separate physics engine for background
+    state.homeBgEngine = Engine.create();
+    state.homeBgWorld = state.homeBgEngine.world;
+    state.homeBgEngine.world.gravity.y = 0.2; // Very slow gravity
+    
+    // Set canvas size
+    state.homeBgCanvas.width = window.innerWidth;
+    state.homeBgCanvas.height = window.innerHeight;
+    
+    // Create wall boundaries
+    const wallThickness = 100;
+    const canvasWidth = state.homeBgCanvas.width;
+    const canvasHeight = state.homeBgCanvas.height;
+    
+    const walls = [
+        Bodies.rectangle(canvasWidth / 2, -wallThickness / 2, canvasWidth, wallThickness, { isStatic: true }),
+        Bodies.rectangle(canvasWidth / 2, canvasHeight + wallThickness / 2, canvasWidth, wallThickness, { isStatic: true }),
+        Bodies.rectangle(-wallThickness / 2, canvasHeight / 2, wallThickness, canvasHeight, { isStatic: true }),
+        Bodies.rectangle(canvasWidth + wallThickness / 2, canvasHeight / 2, wallThickness, canvasHeight, { isStatic: true })
+    ];
+    
+    World.add(state.homeBgWorld, walls);
+    
+    // Generate background charm text - use decorative symbols
+    const bgCharms = ['?', '?', '?', '?', '?', ':', '*', '+', '??', '?', '?', '?', '?', '?', '?', '?'];
+    const numCharms = 30; // Number of background charms
+    
+    for (let i = 0; i < numCharms; i++) {
+        const charm = bgCharms[Math.floor(Math.random() * bgCharms.length)];
+        const baseSize = 20 + Math.random() * 15; // 20-35px
+        const radius = baseSize / 2;
+        
+        // Random starting position
+        const x = Math.random() * canvasWidth;
+        const y = Math.random() * canvasHeight;
+        
+        // Create body with slow, oil-like physics
+        const body = Bodies.circle(x, y, radius, {
+            restitution: 0.2,
+            friction: 0.1,
+            frictionAir: 0.2, // High air resistance for slow movement
+            density: 0.001
+        });
+        
+        body.charm = charm;
+        body.size = baseSize;
+        body.radius = radius;
+        
+        state.homeBgBodies.push(body);
+        World.add(state.homeBgWorld, body);
+    }
+    
+    // Start animation loop if on step 0
+    if (state.currentStep === 0) {
+        animateHomeBackground();
+    }
+}
+
+// Animate background charms
+function animateHomeBackground() {
+    if (state.currentStep !== 0 || !state.homeBgCanvas || !state.homeBgCtx) {
+        if (state.homeBgAnimationId) {
+            cancelAnimationFrame(state.homeBgAnimationId);
+            state.homeBgAnimationId = null;
+        }
+        return;
+    }
+    
+    // Update physics
+    Matter.Engine.update(state.homeBgEngine);
+    
+    // Clear canvas
+    state.homeBgCtx.clearRect(0, 0, state.homeBgCanvas.width, state.homeBgCanvas.height);
+    
+    // Draw charms in white
+    state.homeBgBodies.forEach(body => {
+        const x = body.position.x;
+        const y = body.position.y;
+        const fontSize = body.size;
+        
+        state.homeBgCtx.save();
+        state.homeBgCtx.translate(x, y);
+        state.homeBgCtx.rotate(body.angle);
+        
+        state.homeBgCtx.textAlign = 'center';
+        state.homeBgCtx.textBaseline = 'middle';
+        state.homeBgCtx.font = `${fontSize}px Georgia, Palatino, 'Palatino Linotype', 'Book Antiqua', Garamond, 'Times New Roman', serif`;
+        state.homeBgCtx.fillStyle = 'rgba(255, 255, 255, 0.3)'; // Semi-transparent white
+        state.homeBgCtx.fillText(body.charm, 0, 0);
+        
+        state.homeBgCtx.restore();
+    });
+    
+    state.homeBgAnimationId = requestAnimationFrame(animateHomeBackground);
+}
+
+// Setup home page card tilt effect (mouse on desktop, device motion on mobile)
+function setupHomeCardTilt() {
+    const card = document.getElementById('home-card');
+    if (!card) return;
+    
+    let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let lastAcceleration = { x: 0, y: 0, z: 0 };
+    
+    // Mouse move handler for desktop tilt
+    function handleMouseMove(event) {
+        if (state.currentStep !== 0) return; // Only on home page
+        if (isMobile) return; // Skip on mobile
+        
+        const rect = card.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Calculate tilt based on mouse position
+        const tiltX = ((event.clientY - centerY) / (rect.height / 2)) * 8; // Max 8deg
+        const tiltY = ((event.clientX - centerX) / (rect.width / 2)) * -8; // Max 8deg (inverted)
+        
+        card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.02)`;
+    }
+    
+    // Device motion handler for mobile tilt
+    function handleDeviceMotion(event) {
+        if (state.currentStep !== 0) return; // Only on home page
+        
+        const acceleration = event.accelerationIncludingGravity || event.acceleration;
+        if (!acceleration) return;
+        
+        // Smooth the acceleration values
+        const smoothFactor = 0.3;
+        const smoothX = lastAcceleration.x + (acceleration.x - lastAcceleration.x) * smoothFactor;
+        const smoothY = lastAcceleration.y + (acceleration.y - lastAcceleration.y) * smoothFactor;
+        
+        // Map acceleration to tilt (inverted for natural feel)
+        const tiltX = Math.max(-10, Math.min(10, smoothY * 2)); // Max 10deg
+        const tiltY = Math.max(-10, Math.min(10, -smoothX * 2)); // Max 10deg (inverted)
+        
+        card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.02)`;
+        
+        lastAcceleration = { x: smoothX, y: smoothY, z: acceleration.z || 0 };
+    }
+    
+    // Reset tilt when mouse leaves
+    function handleMouseLeave() {
+        if (state.currentStep !== 0) return;
+        if (isMobile) return;
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+    }
+    
+    // Desktop mouse events
+    if (!isMobile) {
+        card.addEventListener('mousemove', handleMouseMove);
+        card.addEventListener('mouseleave', handleMouseLeave);
+    }
+    
+    // Mobile device motion
+    if (isMobile && window.DeviceMotionEvent) {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            // iOS 13+ - request permission on interaction
+            document.addEventListener('touchstart', function requestPermissionOnce() {
+                DeviceMotionEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('devicemotion', handleDeviceMotion);
+                        }
+                    })
+                    .catch(console.error);
+                document.removeEventListener('touchstart', requestPermissionOnce);
+            }, { once: true });
+        } else {
+            // Android or older iOS
+            window.addEventListener('devicemotion', handleDeviceMotion);
+        }
     }
 }
 
@@ -1260,41 +1533,85 @@ function generateShareLink() {
     }
     
     try {
-        // Encode state to base64
-        // Use lower quality for share links to keep URL manageable
-        let quality = 0.7;
-        let imageDataUrl = state.image.toDataURL('image/jpeg', quality);
+        // Create a smaller canvas for share links to keep URL short
+        const maxShareDimension = 400; // Max width or height for share links
+        let shareCanvas = document.createElement('canvas');
+        let shareCtx = shareCanvas.getContext('2d');
         
-        // If URL is still too long, reduce quality further
-        while (imageDataUrl.length > 2000000 && quality > 0.3) { // ~2MB limit
-            quality -= 0.1;
-            imageDataUrl = state.image.toDataURL('image/jpeg', quality);
+        // Calculate dimensions to fit within maxShareDimension while maintaining aspect ratio
+        let shareWidth = state.image.width;
+        let shareHeight = state.image.width ? state.image.height : shareWidth;
+        
+        // Get actual dimensions if state.image is a canvas
+        if (state.image instanceof HTMLCanvasElement) {
+            shareWidth = state.image.width;
+            shareHeight = state.image.height;
+        } else if (state.image instanceof HTMLImageElement) {
+            shareWidth = state.image.naturalWidth || state.image.width;
+            shareHeight = state.image.naturalHeight || state.image.height;
         }
         
-        const stateData = {
-            filter: state.filter,
-            charms: state.charms.join(''),
+        const aspectRatio = shareWidth / shareHeight;
+        if (shareWidth > shareHeight) {
+            shareWidth = Math.min(shareWidth, maxShareDimension);
+            shareHeight = shareWidth / aspectRatio;
+        } else {
+            shareHeight = Math.min(shareHeight, maxShareDimension);
+            shareWidth = shareHeight * aspectRatio;
+        }
+        
+        shareCanvas.width = Math.round(shareWidth);
+        shareCanvas.height = Math.round(shareHeight);
+        
+        // Draw resized image
+        shareCtx.drawImage(state.image, 0, 0, shareCanvas.width, shareCanvas.height);
+        
+        // Use lower quality for share links to keep URL manageable
+        let quality = 0.5; // Start with lower quality
+        let imageDataUrl = shareCanvas.toDataURL('image/jpeg', quality);
+        
+        // If URL is still too long, reduce quality further
+        while (imageDataUrl.length > 500000 && quality > 0.2) { // ~500KB limit
+            quality -= 0.05;
+            imageDataUrl = shareCanvas.toDataURL('image/jpeg', quality);
+        }
+        
+    const stateData = {
+        filter: state.filter,
+        charms: state.charms.join(''),
             image: imageDataUrl,
             message: state.customMessage || '',
-            charmColor: state.charmColor || '#4A90E2',
-            musicMuted: state.musicMuted || false
-        };
+            charmColor: state.charmColor || '#7ED321',
+            musicMuted: state.musicMuted || false,
+            uiVisible: state.uiVisible !== undefined ? state.uiVisible : true
+    };
     
-        const encoded = btoa(JSON.stringify(stateData));
-        const shareUrl = window.location.origin + window.location.pathname + '#' + encoded;
-        
-        // Check if URL is too long (browser limit is typically ~2000-8000 chars)
-        if (shareUrl.length > 8000) {
+    const encoded = btoa(JSON.stringify(stateData));
+    const shareUrl = window.location.origin + window.location.pathname + '#' + encoded;
+    
+        // Check if URL is too long (browser limit is typically ~2000-8000 chars, use 6000 for safety)
+        if (shareUrl.length > 6000) {
             console.warn('Share URL is very long:', shareUrl.length, 'characters');
-            // Try with even lower quality
-            quality = 0.5;
-            imageDataUrl = state.image.toDataURL('image/jpeg', quality);
+            // Try with even lower quality and smaller size
+            const smallerSize = 300;
+            if (shareWidth > shareHeight) {
+                shareWidth = smallerSize;
+                shareHeight = shareWidth / aspectRatio;
+            } else {
+                shareHeight = smallerSize;
+                shareWidth = shareHeight * aspectRatio;
+            }
+            shareCanvas.width = Math.round(shareWidth);
+            shareCanvas.height = Math.round(shareHeight);
+            shareCtx.drawImage(state.image, 0, 0, shareCanvas.width, shareCanvas.height);
+            quality = 0.4;
+            imageDataUrl = shareCanvas.toDataURL('image/jpeg', quality);
             stateData.image = imageDataUrl;
             const newEncoded = btoa(JSON.stringify(stateData));
             const newShareUrl = window.location.origin + window.location.pathname + '#' + newEncoded;
             
-            if (newShareUrl.length > 8000) {
-                alert('Image is too large for share link. Please try with a smaller image or lower quality.');
+            if (newShareUrl.length > 6000) {
+                alert('Image is too large for share link. Please try with a smaller image.');
                 return;
             }
             
@@ -1326,7 +1643,85 @@ function generateShareLink() {
         trackEvent('CardShared');
     } catch (e) {
         console.error('Error generating share link:', e);
-        alert('Failed to generate share link. The image may be too large. Please try again.');
+        alert('Failed to generate share link: ' + e.message);
+    }
+}
+
+// Handle shorten URL button click
+async function handleShortenUrl() {
+    const shareLinkInput = document.getElementById('share-link');
+    if (!shareLinkInput || !shareLinkInput.value) {
+        alert('No URL to shorten');
+        return;
+    }
+    
+    const longUrl = shareLinkInput.value;
+    const shortenBtn = document.getElementById('shorten-url-btn');
+    
+    // Show loading state
+    if (shortenBtn) {
+        shortenBtn.disabled = true;
+        shortenBtn.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 8px;">hourglass_empty</span> Shortening...';
+    }
+    
+    try {
+        const shortUrl = await shortenUrl(longUrl);
+        if (shortUrl && shortUrl !== longUrl) {
+            shareLinkInput.value = shortUrl;
+            if (shortenBtn) {
+                shortenBtn.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 8px;">check</span> Shortened';
+                setTimeout(() => {
+                    shortenBtn.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 8px;">link</span> Shorten';
+                    shortenBtn.disabled = false;
+                }, 2000);
+            }
+        } else {
+            alert('Failed to shorten URL. Please try again.');
+            if (shortenBtn) {
+                shortenBtn.disabled = false;
+                shortenBtn.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 8px;">link</span> Shorten';
+            }
+        }
+    } catch (err) {
+        console.error('URL shortening failed:', err);
+        alert('Failed to shorten URL. Please try again.');
+        if (shortenBtn) {
+            shortenBtn.disabled = false;
+            shortenBtn.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 8px;">link</span> Shorten';
+        }
+    }
+}
+
+// Shorten URL using is.gd service (free, no auth required)
+async function shortenUrl(longUrl) {
+    try {
+        // Use is.gd API - free URL shortener, no authentication needed
+        const apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data.shorturl) {
+            return data.shorturl;
+        } else {
+            throw new Error(data.errormessage || 'Failed to shorten URL');
+        }
+    } catch (error) {
+        console.warn('URL shortening error:', error);
+        // Fallback: try v.gd if is.gd fails
+        try {
+            const apiUrl = `https://v.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            
+            if (data.shorturl) {
+                return data.shorturl;
+            }
+        } catch (fallbackError) {
+            console.warn('Fallback URL shortening also failed:', fallbackError);
+        }
+        
+        // Return original URL if shortening fails
+        return longUrl;
     }
 }
 
@@ -1422,7 +1817,7 @@ function loadFromHash() {
             state.charms = decoded.charms ? decoded.charms.split('') : [];
             
             // Load charm color
-            state.charmColor = decoded.charmColor || '#4A90E2';
+            state.charmColor = decoded.charmColor || '#7ED321';
             // Update color button selection
             document.querySelectorAll('.charm-color-btn').forEach(btn => {
                 btn.classList.remove('active', 'selected');
@@ -1437,6 +1832,16 @@ function loadFromHash() {
             // Load music mute state
             state.musicMuted = decoded.musicMuted || false;
             
+            // Load UI visibility state (support both old hideUI and new uiVisible)
+            if (decoded.uiVisible !== undefined) {
+                state.uiVisible = decoded.uiVisible;
+            } else if (decoded.hideUI !== undefined) {
+                // Backward compatibility with old hideUI format
+                state.uiVisible = !decoded.hideUI;
+            } else {
+                state.uiVisible = true; // Default to visible
+            }
+            
             // Display custom message if provided
             const messageDisplay = document.getElementById('custom-message-display');
             if (state.customMessage && state.customMessage.trim()) {
@@ -1444,6 +1849,27 @@ function loadFromHash() {
                 messageDisplay.querySelector('p').textContent = state.customMessage;
             } else {
                 messageDisplay.style.display = 'none';
+            }
+            
+            // Apply UI visibility state
+            const actionBar = document.querySelector('#step-5 .action-bar');
+            const visibilityIcon = document.getElementById('visibility-icon');
+            if (actionBar) {
+                if (!state.uiVisible) {
+                    actionBar.style.display = 'none';
+                    if (visibilityIcon) {
+                        visibilityIcon.textContent = 'visibility_off';
+                        visibilityIcon.classList.remove('text-gray-700');
+                        visibilityIcon.classList.add('text-gray-400');
+                    }
+                } else {
+                    actionBar.style.display = '';
+                    if (visibilityIcon) {
+                        visibilityIcon.textContent = 'visibility';
+                        visibilityIcon.classList.remove('text-gray-400');
+                        visibilityIcon.classList.add('text-gray-700');
+                    }
+                }
             }
             
             // Go directly to final view

@@ -36,6 +36,56 @@
             margin: 0;
             padding: 0;
         }
+        /* Techy Background */
+        .techy-bg {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #1a1a2e 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        .techy-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+        }
+        .techy-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            animation: pulseGlow 8s ease-in-out infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        /* Tiltable Card */
+        .home-tilt-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
+            max-width: 600px;
+            width: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+        }
+        .home-tilt-card:hover {
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
         /* Ensure emojis render properly in Chrome */
         .emoji, [data-charms], #charm-input {
             font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', 'Twemoji Mozilla', emoji, sans-serif !important;
@@ -66,11 +116,11 @@
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #8B6F5E, #A67C7C, #9B7A6B);
+            background: linear-gradient(90deg, #10b981, #059669, #047857);
             transition: width 0.3s ease;
         }
         .btn-mui {
-            background: #8B6F5E;
+            background: #059669;
             color: white;
             border: none;
             border-radius: 4px;
@@ -80,7 +130,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(139, 111, 94, 0.3);
+            box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
             transition: all 0.2s ease;
             min-width: 64px;
             position: relative;
@@ -89,11 +139,11 @@
             touch-action: manipulation;
         }
         .btn-mui:hover {
-            background: #7A5A4A;
-            box-shadow: 0 4px 8px rgba(139, 111, 94, 0.4);
+            background: #047857;
+            box-shadow: 0 4px 8px rgba(5, 150, 105, 0.4);
         }
         .btn-mui:active {
-            box-shadow: 0 1px 2px rgba(139, 111, 94, 0.3);
+            box-shadow: 0 1px 2px rgba(5, 150, 105, 0.3);
         }
         .btn-mui:disabled {
             background: #e0e0e0;
@@ -103,8 +153,8 @@
         }
         .btn-mui-outlined {
             background: transparent;
-            color: #8B6F5E;
-            border: 1px solid #8B6F5E;
+            color: #059669;
+            border: 1px solid #059669;
             box-shadow: none;
             position: relative;
             z-index: 10;
@@ -112,16 +162,16 @@
             touch-action: manipulation;
         }
         .btn-mui-outlined:hover {
-            background: rgba(139, 111, 94, 0.08);
+            background: rgba(5, 150, 105, 0.08);
         }
         .btn-mui-text {
             background: transparent;
-            color: #8B6F5E;
+            color: #059669;
             box-shadow: none;
             padding: 8px 16px;
         }
         .btn-mui-text:hover {
-            background: rgba(139, 111, 94, 0.08);
+            background: rgba(5, 150, 105, 0.08);
         }
         .filter-preview {
             border-radius: 8px;
@@ -133,16 +183,16 @@
             transform: scale(0.95);
         }
         .filter-preview.active {
-            border-color: #1976d2;
-            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
         }
         
         /* Selected states for charm color buttons */
         .charm-color-btn.active,
         .charm-color-btn.selected {
-            border-color: #8B6F5E !important;
+            border-color: #059669 !important;
             border-width: 3px !important;
-            box-shadow: 0 0 0 3px rgba(139, 111, 94, 0.3), 0 4px 8px rgba(139, 111, 94, 0.2);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3), 0 4px 8px rgba(5, 150, 105, 0.2);
             transform: scale(1.05);
             font-weight: 600;
         }
@@ -150,8 +200,8 @@
         /* Selected states for charm preset buttons */
         .charm-preset-btn.active,
         .charm-preset-btn.selected {
-            border: 3px solid #8B6F5E;
-            box-shadow: 0 0 0 3px rgba(139, 111, 94, 0.3), 0 4px 12px rgba(139, 111, 94, 0.25);
+            border: 3px solid #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3), 0 4px 12px rgba(5, 150, 105, 0.25);
             transform: scale(1.05);
             font-weight: 600;
         }
@@ -375,9 +425,9 @@
         #start-btn {
             backdrop-filter: blur(10px);
             background: linear-gradient(135deg, 
-                rgba(107, 79, 66, 0.95) 0%, 
-                rgba(134, 96, 96, 0.95) 50%, 
-                rgba(123, 94, 79, 0.95) 100%);
+                rgba(16, 185, 129, 0.95) 0%, 
+                rgba(5, 150, 105, 0.95) 50%, 
+                rgba(4, 120, 87, 0.95) 100%);
             border: 1px solid rgba(255, 255, 255, 0.4);
             position: relative;
             overflow: hidden;
@@ -402,8 +452,8 @@
         }
         
         #start-btn:hover {
-            box-shadow: 0 0 20px rgba(166, 124, 124, 0.5),
-                        0 0 40px rgba(166, 124, 124, 0.4),
+            box-shadow: 0 0 20px rgba(5, 150, 105, 0.5),
+                        0 0 40px rgba(5, 150, 105, 0.4),
                         inset 0 0 20px rgba(255, 255, 255, 0.2);
         }
         
@@ -491,65 +541,81 @@
     </div>
 
     <!-- Step 0: Welcome Screen -->
-    <div id="step-0" class="step active bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 h-screen flex flex-col">
-        <div class="flex-1 flex flex-col items-center justify-center px-4 py-6 md:py-8">
-            <div class="text-center max-w-2xl w-full fade-in">
-                <!-- Main Hero Section -->
-                <div class="mb-8 md:mb-10">
-                    <h1 class="text-4xl md:text-6xl font-bold mb-3 leading-tight" style="font-family: Georgia, Palatino, 'Palatino Linotype', 'Book Antiqua', Garamond, 'Times New Roman', serif;">
-                        <div class="flex items-center justify-center gap-3 mb-1">
-                            <span class="material-icons text-5xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-[#A67C7C] via-[#B89A8A] to-[#C8A882] hue-shift">photo_album</span>
-                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#A67C7C] via-[#B89A8A] to-[#C8A882] hue-shift shake-title">Shaker</span>
-                        </div>
-                        <div class="block">
-                            <span class="text-gray-800">Card-Maker</span>
-                        </div>
-                    </h1>
-                    <p class="text-lg md:text-xl text-gray-700 mb-2 font-medium">Create live shaker photo cards</p>
-                    <p class="text-sm md:text-base text-gray-600 max-w-lg mx-auto">Transform your photos into interactive digital shaker cards</p>
-                </div>
+    <div id="step-0" class="step active h-screen flex flex-col relative overflow-hidden">
+        <!-- Techy Background -->
+        <div class="absolute inset-0 techy-bg"></div>
+        
+        <!-- Background Charms Canvas -->
+        <canvas id="home-bg-charms" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 1;"></canvas>
+        
+        <!-- Tiltable Card Container -->
+        <div class="flex-1 flex items-center justify-center px-4 py-6 md:py-8 relative z-10">
+            <div id="home-card" class="home-tilt-card fade-in">
+                <!-- Card Content -->
+                <div class="p-8 md:p-12">
+                    <!-- Title -->
+                    <div class="text-center mb-8">
+                        <h1 class="text-4xl md:text-6xl font-bold mb-2 leading-tight" style="font-family: Georgia, Palatino, 'Palatino Linotype', 'Book Antiqua', Garamond, 'Times New Roman', serif;">
+                            <div class="text-transparent bg-clip-text bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] hue-shift shake-title mb-1">Shaker</div>
+                            <div class="text-gray-800">Card-Maker</div>
+                        </h1>
+                        <p class="text-lg md:text-xl text-gray-700 mb-2 font-medium mt-4">Create live shaker photo cards</p>
+                        <p class="text-sm md:text-base text-gray-600 max-w-lg mx-auto">Transform your photos into interactive digital shaker cards</p>
+                    </div>
 
-                <!-- Feature Cards -->
-                <div class="flex flex-row justify-center items-start gap-6 md:gap-8 mb-8 md:mb-10">
-                    <div class="p-3 text-center">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 mx-auto" style="background-color: rgba(200, 168, 130, 0.2);">
-                            <span class="material-icons text-2xl" style="color: #8B6F5E;">photo_camera</span>
+                    <!-- Step Instructions -->
+                    <div class="flex flex-col gap-6 mb-8 max-w-xl mx-auto">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] flex items-center justify-center text-white font-bold text-lg shadow-md">
+                            1
                         </div>
-                        <h3 class="font-semibold text-gray-900 text-sm">Upload Photo</h3>
-                    </div>
-                    <div class="p-3 text-center">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 mx-auto" style="background-color: rgba(184, 154, 138, 0.2);">
-                            <span class="material-icons text-2xl" style="color: #A67C7C;">palette</span>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">Upload Your Photo</h3>
+                                <p class="text-sm text-gray-600">Choose an image from your device</p>
+                            </div>
                         </div>
-                        <h3 class="font-semibold text-gray-900 text-sm">Add Filters</h3>
-                    </div>
-                    <div class="p-3 text-center">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 mx-auto" style="background-color: rgba(200, 168, 130, 0.2);">
-                            <span class="material-icons text-2xl" style="color: #9B7A6B;">auto_awesome</span>
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] flex items-center justify-center text-white font-bold text-lg shadow-md">
+                            2
                         </div>
-                        <h3 class="font-semibold text-gray-900 text-sm">Custom Charms</h3>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">Apply Filters & Add Charms</h3>
+                                <p class="text-sm text-gray-600">Customize with filters and emoji charms</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] flex items-center justify-center text-white font-bold text-lg shadow-md">
+                            3
+                        </div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">Share Your Card</h3>
+                                <p class="text-sm text-gray-600">Generate a shareable link instantly</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- CTA Button - More Prominent -->
-                <div class="mb-8">
-                    <button id="start-btn" class="w-full md:w-auto px-16 py-6 text-xl font-bold text-white rounded-lg transform hover:scale-105 transition-all duration-300 hue-shift">
-                        <span class="flex items-center justify-center gap-3">
-                            <span>Create Your Card</span>
-                            <span class="material-icons text-2xl">arrow_forward</span>
-                        </span>
-                    </button>
+                    <!-- CTA Button -->
+                    <div class="text-center mb-6">
+                        <button id="start-btn" class="px-8 py-3 text-base font-semibold text-white rounded-lg transition-all duration-300 hue-shift">
+                            <span class="flex items-center justify-center gap-2">
+                                <span>Create Your Card</span>
+                                <span class="material-icons text-lg">arrow_forward</span>
+                            </span>
+                        </button>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="text-center pt-4 border-t border-gray-200">
+                        <p class="text-xs text-gray-500 mb-2">
+                            If you'd like to report a bug or suggest a feature, you can <a href="https://forms.gle/2rem838GryeUay9s8" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors underline" style="color: #059669;">provide feedback here</a>.
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            Created by <a href="https://github.com/blu-octopus" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">TouchyGrass</a> | 
+                            <a href="https://github.com/blu-octopus/diy-photocard-shaker" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">GitHub</a>
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Footer Links - Fixed at bottom -->
-        <div class="py-4 px-4 border-t border-gray-200/50">
-            <p class="text-xs text-gray-500 text-center">
-                Created by <a href="https://github.com/blu-octopus" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">TouchyGrass</a> | 
-                <a href="https://github.com/blu-octopus/diy-photocard-shaker" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">GitHub</a> | 
-                <a href="https://forms.gle/2rem838GryeUay9s8" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">Feedback</a>
-            </p>
         </div>
     </div>
 
@@ -562,7 +628,7 @@
                 
                 <input type="file" id="image-upload" accept="image/*" class="hidden">
                 <label for="image-upload" class="block w-full">
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer transition-all" style="--hover-border: #059669; --hover-bg: rgba(5, 150, 105, 0.1);" onmouseover="this.style.borderColor='#059669'; this.style.backgroundColor='rgba(5, 150, 105, 0.1)';" onmouseout="this.style.borderColor='rgb(209, 213, 219)'; this.style.backgroundColor='';">
                         <span class="material-icons text-6xl text-gray-400 mb-4 block">cloud_upload</span>
                         <p class="text-gray-700 font-medium mb-2">Tap to choose from gallery or take a photo</p>
                         <p class="text-sm text-gray-500">Select from your photos or use camera</p>
@@ -664,77 +730,49 @@
         <div class="flex-1 flex items-center justify-center px-4 py-20">
             <div class="w-full max-w-2xl fade-in">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-2 text-center">Add Charms</h2>
-                <p class="text-sm text-gray-500 mb-6 text-center">Up to 15 emojis or symbols (will generate ~20 objects)</p>
+                <p class="text-sm text-gray-500 mb-6 text-center">Up to 15 text characters (each character generates 3 objects)</p>
                 
                 <!-- Preview Canvas -->
                 <div class="mb-6 flex justify-center">
                     <canvas id="preview-canvas-3" width="400" height="400" class="max-w-full h-auto rounded-lg shadow-lg bg-gray-100"></canvas>
                 </div>
                 
-                <!-- Text Input -->
+                <!-- Text Input (First) -->
                 <div class="mb-4">
-                    <input type="text" id="charm-input" placeholder="Type emojis or symbols..." maxlength="15" 
-                           class="w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
-                           style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', 'Twemoji Mozilla', emoji, sans-serif;"
+                    <p class="text-sm font-medium text-gray-700 mb-2">Custom Text:</p>
+                    <input type="text" id="charm-input" placeholder="Type text characters..." maxlength="15" 
+                           class="w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-lg text-center"
+                           style="--focus-ring: #059669;"
+                           onfocus="this.style.borderColor='#059669'; this.style.boxShadow='0 0 0 2px rgba(5, 150, 105, 0.2)';"
+                           onblur="this.style.borderColor='rgb(209, 213, 219)'; this.style.boxShadow='';"
                            aria-label="Charm input">
-                    <p class="text-xs text-gray-500 mt-2 text-center">Max 15 characters</p>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Enter up to 15 characters. Each character will generate 3 charm objects.</p>
                 </div>
                 
-                <!-- Color Presets -->
+                <!-- Color Presets (Second) -->
                 <div class="mb-4">
-                    <p class="text-sm font-medium text-gray-700 mb-3">Charm Color:</p>
+                    <p class="text-sm font-medium text-gray-700 mb-3">Text Color:</p>
                     <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm active" data-color="#4A90E2" style="background-color: #4A90E2; color: white;" aria-label="Blue">
-                            Blue
-                        </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#7ED321" style="background-color: #7ED321; color: white;" aria-label="Green">
-                            Green
+                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#E74C3C" style="background-color: #E74C3C; color: white;" aria-label="Red">
+                            Red
                         </button>
                         <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#F5A623" style="background-color: #F5A623; color: white;" aria-label="Yellow">
                             Yellow
                         </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#FF6B9D" style="background-color: #FF6B9D; color: white;" aria-label="Pink">
-                            Pink
+                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm active" data-color="#7ED321" style="background-color: #7ED321; color: white;" aria-label="Green">
+                            Green
                         </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#2C2C2C" style="background-color: #2C2C2C; color: white;" aria-label="Grunge">
-                            Grunge
+                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#4A90E2" style="background-color: #4A90E2; color: white;" aria-label="Blue">
+                            Blue
                         </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#E74C3C" style="background-color: #E74C3C; color: white;" aria-label="Red">
-                            Red
+                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#000000" style="background-color: #000000; color: white;" aria-label="Black">
+                            Black
                         </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="rainbow" style="background: linear-gradient(90deg, #FFB3BA, #BAFFC9, #BAE1FF, #FFFFBA, #FFB3E6, #C7CEEA); color: #333;" aria-label="Rainbow">
+                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#FFFFFF" style="background-color: #FFFFFF; color: #333; border-color: #ccc;" aria-label="White">
+                            White
+                        </button>
+                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="rainbow" style="background: linear-gradient(90deg, #FFB3BA, #FFDFBA, #FFFFBA, #BAFFC9, #BAE1FF, #E0BAFF); color: #333;" aria-label="Rainbow">
                             Rainbow
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Preset Sets (Grid on mobile) -->
-                <div class="mb-4">
-                    <p class="text-sm font-medium text-gray-700 mb-3">Quick Pick Sets:</p>
-                    <div class="grid grid-cols-2 sm:flex sm:gap-2 sm:overflow-x-auto charm-preset-scroll pb-2 gap-2">
-                        <button class="charm-preset-btn px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium" data-charms="??????" aria-label="Blue charm set">
-                            <span class="text-lg block" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', 'Twemoji Mozilla', emoji, sans-serif;">??????</span>
-                            <span class="block text-xs mt-1">Blue</span>
-                        </button>
-                        <button class="charm-preset-btn px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 font-medium" data-charms="????" aria-label="Green charm set">
-                            <span class="text-lg block" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, sans-serif;">????</span>
-                            <span class="block text-xs mt-1">Green</span>
-                        </button>
-                        <button class="charm-preset-btn px-4 py-3 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 font-medium" data-charms="?????" aria-label="Yellow charm set">
-                            <span class="text-lg block" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, sans-serif;">?????</span>
-                            <span class="block text-xs mt-1">Yellow</span>
-                        </button>
-                        <button class="charm-preset-btn px-4 py-3 bg-pink-50 text-pink-700 rounded-lg hover:bg-pink-100 font-medium" data-charms="????¡ñ????" aria-label="Pink charm set">
-                            <span class="text-lg block" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, sans-serif;">????¡ñ????</span>
-                            <span class="block text-xs mt-1">Pink</span>
-                        </button>
-                        <button class="charm-preset-btn px-4 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 font-medium" data-charms="?????????" aria-label="Grunge charm set">
-                            <span class="text-lg block" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, sans-serif;">?????????</span>
-                            <span class="block text-xs mt-1">Grunge</span>
-                        </button>
-                        <button class="charm-preset-btn px-4 py-3 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 font-medium" data-charms="???" aria-label="Red charm set">
-                            <span class="text-lg block" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', emoji, sans-serif;">???</span>
-                            <span class="block text-xs mt-1">Red</span>
                         </button>
                     </div>
                 </div>
@@ -769,7 +807,9 @@
                 <!-- Text Input -->
                 <div class="mb-4">
                     <textarea id="custom-message-input" placeholder="Enter your message here..." 
-                              class="w-full px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base resize-none"
+                              onfocus="this.style.borderColor='#059669'; this.style.boxShadow='0 0 0 2px rgba(5, 150, 105, 0.2)';"
+                              onblur="this.style.borderColor='rgb(209, 213, 219)'; this.style.boxShadow='';" 
+                              class="w-full px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-base resize-none"
                               rows="3"
                               maxlength="200"
                               style="line-height: 1.6; padding-top: 12px; padding-bottom: 12px;"
@@ -804,10 +844,19 @@
 
     <!-- Step 5: Final Shaker Experience -->
     <div id="step-5" class="step bg-gray-50">
-        <!-- Sound Toggle Button (Top Right) -->
-        <button id="sound-toggle-btn" class="fixed top-4 right-4 z-50 p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center" aria-label="Toggle sound" style="width: 48px; height: 48px;">
-            <span id="sound-icon" class="material-icons text-gray-700" style="line-height: 1;">volume_up</span>
-        </button>
+        <!-- Top Right Buttons -->
+        <div class="fixed top-4 right-4 z-50 flex gap-2">
+            <button id="share-btn" class="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center" aria-label="Share" style="width: 48px; height: 48px;">
+                <span class="material-icons" style="color: #047857; line-height: 1;">share</span>
+            </button>
+            <button id="sound-toggle-btn" class="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center" aria-label="Toggle sound" style="width: 48px; height: 48px;">
+                <span id="sound-icon" class="material-icons text-gray-700" style="line-height: 1;">volume_up</span>
+            </button>
+            <!-- Visibility Toggle Button -->
+            <button id="visibility-toggle-btn" class="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center" aria-label="Toggle action bar visibility" style="width: 48px; height: 48px;">
+                <span id="visibility-icon" class="material-icons text-gray-700" style="line-height: 1;">visibility</span>
+            </button>
+        </div>
         
         <!-- Background Music (Hidden) -->
         <audio id="background-music" loop>
@@ -818,16 +867,12 @@
         <!-- Action Bar (Top on mobile, bottom on desktop) -->
         <div class="action-bar md:order-2">
             <div class="flex justify-center gap-4 md:gap-6">
-                <button id="share-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Share">
-                    <span class="material-icons text-blue-600">share</span>
-                    <span class="text-xs font-medium text-gray-700">Share</span>
-                </button>
                 <button id="download-video-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Download Video">
-                    <span class="material-icons text-purple-600">download</span>
+                    <span class="material-icons" style="color: #047857;">download</span>
                     <span class="text-xs font-medium text-gray-700">Download</span>
                 </button>
                 <button id="shake-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Shake">
-                    <span class="material-icons text-pink-600">vibration</span>
+                    <span class="material-icons" style="color: #047857;">vibration</span>
                     <span class="text-xs font-medium text-gray-700">Shake</span>
                 </button>
             </div>
@@ -859,12 +904,18 @@
         <div class="bg-white rounded-lg p-6 m-4 max-w-md w-full fade-in shadow-xl">
             <h3 class="text-xl font-semibold mb-4">Share Your Card</h3>
             <input type="text" id="share-link" readonly class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm mb-4 border border-gray-300">
-            <div class="flex gap-3">
+            <div class="flex gap-3 mb-3">
                 <button id="copy-link-btn" class="btn-mui flex-1 py-3">
                     <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">content_copy</span>
                     Copy
                 </button>
-                <button id="close-share-modal" class="btn-mui-outlined px-6 py-3">
+                <button id="shorten-url-btn" class="btn-mui-outlined flex-1 py-3">
+                    <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">link</span>
+                    Shorten
+                </button>
+            </div>
+            <div class="flex gap-3">
+                <button id="close-share-modal" class="btn-mui-outlined w-full py-3">
                     Close
                 </button>
             </div>
