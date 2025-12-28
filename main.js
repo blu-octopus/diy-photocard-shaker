@@ -321,6 +321,16 @@ function setupEventListeners() {
     const shakeBtn = document.getElementById('shake-btn');
     if (shakeBtn) {
         shakeBtn.addEventListener('click', triggerShake);
+        // Add touch support for mobile
+        shakeBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            triggerShake();
+        }, { passive: false });
+        shakeBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, { passive: false });
     }
     const makeAnotherBtn = document.getElementById('make-another-btn');
     if (makeAnotherBtn) {
@@ -506,6 +516,78 @@ function handleImageUpload(e) {
             const resizedCtx = resizedCanvas.getContext('2d');
             resizedCtx.drawImage(img, 0, 0, width, height);
             
+            // Check if image will be shareable (estimate URL size)
+            // Test with a smaller version to see if it fits in shareable URL
+            const testShareSize = 400;
+            let testWidth = width;
+            let testHeight = height;
+            const aspectRatio = testWidth / testHeight;
+            
+            if (testWidth > testHeight) {
+                testWidth = Math.min(testWidth, testShareSize);
+                testHeight = testWidth / aspectRatio;
+            } else {
+                testHeight = Math.min(testHeight, testShareSize);
+                testWidth = testHeight * aspectRatio;
+            }
+            
+            const testCanvas = document.createElement('canvas');
+            testCanvas.width = Math.round(testWidth);
+            testCanvas.height = Math.round(testHeight);
+            const testCtx = testCanvas.getContext('2d');
+            testCtx.drawImage(img, 0, 0, testCanvas.width, testCanvas.height);
+            
+            // Test with low quality to estimate URL size
+            const testDataUrl = testCanvas.toDataURL('image/jpeg', 0.5);
+            const estimatedUrlLength = window.location.origin.length + window.location.pathname.length + 
+                                      testDataUrl.length + 200; // Add buffer for other data
+            
+            let shareable = true;
+            let warningMessage = '';
+            
+            if (estimatedUrlLength > 6000) {
+                // Try with even smaller size
+                const smallerTestSize = 300;
+                let smallerWidth = width;
+                let smallerHeight = height;
+                if (smallerWidth > smallerHeight) {
+                    smallerWidth = smallerTestSize;
+                    smallerHeight = smallerWidth / aspectRatio;
+                } else {
+                    smallerHeight = smallerTestSize;
+                    smallerWidth = smallerHeight * aspectRatio;
+                }
+                const smallerCanvas = document.createElement('canvas');
+                smallerCanvas.width = Math.round(smallerWidth);
+                smallerCanvas.height = Math.round(smallerHeight);
+                const smallerCtx = smallerCanvas.getContext('2d');
+                smallerCtx.drawImage(img, 0, 0, smallerCanvas.width, smallerCanvas.height);
+                const smallerDataUrl = smallerCanvas.toDataURL('image/jpeg', 0.4);
+                const smallerUrlLength = window.location.origin.length + window.location.pathname.length + 
+                                        smallerDataUrl.length + 200;
+                
+                if (smallerUrlLength > 6000) {
+                    shareable = false;
+                    warningMessage = 'This image is too large to generate a shareable link. Please use a smaller image (under 2MB recommended).';
+                } else {
+                    warningMessage = 'Note: This image may be compressed when sharing to keep the link manageable.';
+                }
+            }
+            
+            if (!shareable) {
+                alert(warningMessage);
+                const uploadStatus = document.getElementById('upload-status');
+                if (uploadStatus) {
+                    uploadStatus.textContent = 'กั Image too large for sharing';
+                    uploadStatus.style.color = '#dc2626';
+                }
+                const step1NextBtn = document.getElementById('step-1-next');
+                if (step1NextBtn) {
+                    step1NextBtn.disabled = true;
+                }
+                return;
+            }
+            
             state.image = resizedCanvas;
             
             // Update preview (small preview with confirmation)
@@ -526,6 +608,11 @@ function handleImageUpload(e) {
             const uploadStatus = document.getElementById('upload-status');
             if (uploadStatus) {
                 uploadStatus.textContent = `${width} กั ${height} pixels`;
+                uploadStatus.style.color = '';
+                if (warningMessage) {
+                    uploadStatus.textContent += ' (will be compressed for sharing)';
+                    uploadStatus.style.color = '#f59e0b';
+                }
             }
             
             trackEvent('PhotocardCreated');
@@ -1611,7 +1698,7 @@ function generateShareLink() {
             const newShareUrl = window.location.origin + window.location.pathname + '#' + newEncoded;
             
             if (newShareUrl.length > 6000) {
-                alert('Image is too large for share link. Please try with a smaller image.');
+                alert('Unable to create shareable link: Image is too large.\n\nTips:\n? Use images under 2MB\n? Try a smaller resolution (under 2000px)\n? The card will still work, but sharing may not be available for very large images.');
                 return;
             }
             
@@ -1676,7 +1763,7 @@ async function handleShortenUrl() {
                 }, 2000);
             }
         } else {
-            alert('Failed to shorten URL. Please try again.');
+            alert('Failed to shorten URL. The original link works fine for sharing.');
             if (shortenBtn) {
                 shortenBtn.disabled = false;
                 shortenBtn.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 8px;">link</span> Shorten';
@@ -1684,7 +1771,13 @@ async function handleShortenUrl() {
         }
     } catch (err) {
         console.error('URL shortening failed:', err);
-        alert('Failed to shorten URL. Please try again.');
+        // Show more helpful error message
+        const errorMsg = err.message || 'Unknown error';
+        if (errorMsg.includes('CORS_ERROR') || errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
+            alert('URL shortening is not available due to browser security restrictions. The original link works perfectly fine - you can copy and share it directly!');
+        } else {
+            alert(`Unable to shorten URL: ${errorMsg}. The original link works fine for sharing.`);
+        }
         if (shortenBtn) {
             shortenBtn.disabled = false;
             shortenBtn.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 8px;">link</span> Shorten';
@@ -1692,36 +1785,54 @@ async function handleShortenUrl() {
     }
 }
 
-// Shorten URL using is.gd service (free, no auth required)
+// Shorten URL using CORS proxy or direct API calls
 async function shortenUrl(longUrl) {
+    // Method 1: Try using a CORS proxy (allcors.com is a free service)
     try {
-        // Use is.gd API - free URL shortener, no authentication needed
-        const apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`)}`;
+        const response = await fetch(proxyUrl);
+        const proxyData = await response.json();
         
-        if (data.shorturl) {
-            return data.shorturl;
-        } else {
-            throw new Error(data.errormessage || 'Failed to shorten URL');
-        }
-    } catch (error) {
-        console.warn('URL shortening error:', error);
-        // Fallback: try v.gd if is.gd fails
-        try {
-            const apiUrl = `https://v.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-            
+        if (proxyData.contents) {
+            const data = JSON.parse(proxyData.contents);
             if (data.shorturl) {
+                console.log('URL shortened via CORS proxy');
                 return data.shorturl;
             }
-        } catch (fallbackError) {
-            console.warn('Fallback URL shortening also failed:', fallbackError);
         }
+    } catch (error) {
+        console.warn('CORS proxy method failed:', error.message);
+    }
+    
+    // Method 2: Try direct is.gd API (may fail due to CORS)
+    try {
+        const apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
         
-        // Return original URL if shortening fails
-        return longUrl;
+        if (response.ok) {
+            const data = await response.json();
+            if (data.shorturl) {
+                console.log('URL shortened via direct API');
+                return data.shorturl;
+            } else {
+                throw new Error(data.errormessage || 'No short URL returned');
+            }
+        } else {
+            throw new Error(`HTTP ${response.status}`);
+        }
+    } catch (error) {
+        console.warn('Direct API method failed:', error.message);
+        // Check if it's a CORS error
+        if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+            throw new Error('CORS_ERROR: Browser security prevents direct API access. The original link works fine for sharing.');
+        }
+        throw error;
     }
 }
 

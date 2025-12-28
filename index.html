@@ -82,6 +82,12 @@
             transition: transform 0.1s ease-out;
             will-change: transform;
         }
+        /* Mobile-specific: 70% max width */
+        @media (max-width: 768px) {
+            .home-tilt-card {
+                max-width: 70vw;
+            }
+        }
         .home-tilt-card:hover {
             box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
                         0 0 0 1px rgba(255, 255, 255, 0.2);
@@ -495,9 +501,14 @@
             background: white;
             border-top: 1px solid #e0e0e0;
             padding: 16px;
-            z-index: 100;
+            z-index: 1000;
             box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
             pointer-events: auto;
+        }
+        .action-bar button {
+            pointer-events: auto;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
         }
         @media (min-width: 768px) {
             .action-bar {
@@ -507,6 +518,22 @@
                 margin-top: 24px;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             }
+            /* Keep action bar at bottom for step-5 (card generated screen) */
+            #step-5 .action-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                border-top: 1px solid #e0e0e0;
+                border-radius: 0;
+                margin-top: 0;
+                box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            }
+        }
+        /* Ensure action bar content is visible and properly spaced */
+        #step-5 .action-bar {
+            max-height: none;
+            overflow: visible;
         }
         .material-icons {
             font-family: 'Material Icons';
@@ -552,53 +579,60 @@
         <div class="flex-1 flex items-center justify-center px-4 py-6 md:py-8 relative z-10">
             <div id="home-card" class="home-tilt-card fade-in">
                 <!-- Card Content -->
-                <div class="p-8 md:p-12">
+                <div class="p-8 md:p-12 py-12 md:py-12">
                     <!-- Title -->
                     <div class="text-center mb-8">
                         <h1 class="text-4xl md:text-6xl font-bold mb-2 leading-tight" style="font-family: Georgia, Palatino, 'Palatino Linotype', 'Book Antiqua', Garamond, 'Times New Roman', serif;">
-                            <div class="text-transparent bg-clip-text bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] hue-shift shake-title mb-1">Shaker</div>
+                            <div class="relative inline-block">
+                                <div class="text-transparent bg-clip-text bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] hue-shift shake-title mb-1">Shaker</div>
+                                <img src="assets/santa hat.png" alt="Santa hat" class="absolute -top-2 -right-4 md:-top-3 md:-right-6 w-8 h-8 md:w-12 md:h-12 object-contain" style="pointer-events: none;">
+                            </div>
                             <div class="text-gray-800">Card-Maker</div>
                         </h1>
-                        <p class="text-lg md:text-xl text-gray-700 mb-2 font-medium mt-4">Create live shaker photo cards</p>
-                        <p class="text-sm md:text-base text-gray-600 max-w-lg mx-auto">Transform your photos into interactive digital shaker cards</p>
+                        <p class="text-base md:text-xl text-gray-700 mb-2 font-medium mt-4">Create your digital shaker photo cards</p>
+                        <p class="text-xs md:text-base text-gray-600 max-w-lg mx-auto">Digitize your favorite photo into a shaker card with text bits</p>
                     </div>
 
                     <!-- Step Instructions -->
-                    <div class="flex flex-col gap-6 mb-8 max-w-xl mx-auto">
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] flex items-center justify-center text-white font-bold text-lg shadow-md">
-                            1
+                    <div class="flex flex-col gap-3 md:gap-6 mb-8 max-w-xl mx-auto">
+                        <div class="text-left md:text-center w-full">
+                            <h3 class="font-semibold text-gray-900 mb-1 text-sm md:text-base">
+                                <span class="hidden md:inline">1. Upload Your Photo</span>
+                                <span class="md:hidden">1. Upload Photo</span>
+                            </h3>
+                            <p class="text-xs md:text-sm text-gray-600">
+                                <span class="hidden md:inline">Upload an image from your device, or take a photo with your camera (mobile). For best sharing, use images under 2MB.</span>
+                                <span class="md:hidden">Upload image or take photo (under 2MB for sharing)</span>
+                            </p>
                         </div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900 mb-1">Upload Your Photo</h3>
-                                <p class="text-sm text-gray-600">Choose an image from your device</p>
-                            </div>
+                        <div class="text-left md:text-center w-full">
+                            <h3 class="font-semibold text-gray-900 mb-1 text-sm md:text-base">
+                                <span class="hidden md:inline">2. Apply Filters & Add Charms</span>
+                                <span class="md:hidden">2. Filters & Charms</span>
+                            </h3>
+                            <p class="text-xs md:text-sm text-gray-600">
+                                <span class="hidden md:inline">Customize with filters and shaker text bits</span>
+                                <span class="md:hidden">Customize with filters and text</span>
+                            </p>
                         </div>
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] flex items-center justify-center text-white font-bold text-lg shadow-md">
-                            2
-                        </div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900 mb-1">Apply Filters & Add Charms</h3>
-                                <p class="text-sm text-gray-600">Customize with filters and emoji charms</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] flex items-center justify-center text-white font-bold text-lg shadow-md">
-                            3
-                        </div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900 mb-1">Share Your Card</h3>
-                                <p class="text-sm text-gray-600">Generate a shareable link instantly</p>
-                            </div>
+                        <div class="text-left md:text-center w-full">
+                            <h3 class="font-semibold text-gray-900 mb-1 text-sm md:text-base">
+                                <span class="hidden md:inline">3. Share Your Photo Card</span>
+                                <span class="md:hidden">3. Share Card</span>
+                            </h3>
+                            <p class="text-xs md:text-sm text-gray-600">
+                                <span class="hidden md:inline">Generate a shareable link instantly</span>
+                                <span class="md:hidden">Generate shareable link</span>
+                            </p>
                         </div>
                     </div>
 
                     <!-- CTA Button -->
                     <div class="text-center mb-6">
-                        <button id="start-btn" class="px-8 py-3 text-base font-semibold text-white rounded-lg transition-all duration-300 hue-shift">
+                        <button id="start-btn" class="px-8 py-2 md:py-3 text-base font-semibold text-white rounded-lg transition-all duration-300 hue-shift">
                             <span class="flex items-center justify-center gap-2">
-                                <span>Create Your Card</span>
+                                <span class="md:hidden">create card</span>
+                                <span class="hidden md:inline">Create Your Card</span>
                                 <span class="material-icons text-lg">arrow_forward</span>
                             </span>
                         </button>
@@ -606,10 +640,15 @@
                     
                     <!-- Footer -->
                     <div class="text-center pt-4 border-t border-gray-200">
-                        <p class="text-xs text-gray-500 mb-2">
+                        <p class="text-xs text-gray-500 mb-2 hidden md:block">
                             If you'd like to report a bug or suggest a feature, you can <a href="https://forms.gle/2rem838GryeUay9s8" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors underline" style="color: #059669;">provide feedback here</a>.
                         </p>
-                        <p class="text-xs text-gray-500">
+                        <p class="text-xs text-gray-500 md:hidden">
+                            <a href="https://github.com/blu-octopus" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">TouchyGrass</a> | 
+                            <a href="https://github.com/blu-octopus/diy-photocard-shaker" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">GitHub</a> | 
+                            <a href="https://forms.gle/2rem838GryeUay9s8" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">Feedback Form</a>
+                        </p>
+                        <p class="text-xs text-gray-500 hidden md:block">
                             Created by <a href="https://github.com/blu-octopus" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">TouchyGrass</a> | 
                             <a href="https://github.com/blu-octopus/diy-photocard-shaker" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">GitHub</a>
                         </p>
@@ -624,7 +663,8 @@
         <div class="flex-1 flex items-center justify-center px-4 py-20">
             <div class="w-full max-w-md fade-in">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-2 text-center">Upload Your Photo</h2>
-                <p class="text-sm text-gray-500 mb-8 text-center">JPG, PNG, or WEBP ? Max 3MB</p>
+                <p class="text-sm text-gray-500 mb-2 text-center">JPG, PNG, or WEBP ? Max 3MB</p>
+                <p class="text-xs text-amber-600 mb-8 text-center">? Tip: Images under 2MB work best for sharing links</p>
                 
                 <input type="file" id="image-upload" accept="image/*" class="hidden">
                 <label for="image-upload" class="block w-full">
@@ -730,7 +770,7 @@
         <div class="flex-1 flex items-center justify-center px-4 py-20">
             <div class="w-full max-w-2xl fade-in">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-2 text-center">Add Charms</h2>
-                <p class="text-sm text-gray-500 mb-6 text-center">Up to 15 text characters (each character generates 3 objects)</p>
+                <p class="text-sm text-gray-500 mb-6 text-center">Type up to 15 characters. Each character becomes 3 charms in your shaker card!</p>
                 
                 <!-- Preview Canvas -->
                 <div class="mb-6 flex justify-center">
@@ -746,7 +786,7 @@
                            onfocus="this.style.borderColor='#059669'; this.style.boxShadow='0 0 0 2px rgba(5, 150, 105, 0.2)';"
                            onblur="this.style.borderColor='rgb(209, 213, 219)'; this.style.boxShadow='';"
                            aria-label="Charm input">
-                    <p class="text-xs text-gray-500 mt-2 text-center">Enter up to 15 characters. Each character will generate 3 charm objects.</p>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Type up to 15 characters (spaces count too, so avoid them). Each character you type becomes 3 floating charms in your shaker card!</p>
                 </div>
                 
                 <!-- Color Presets (Second) -->
@@ -843,7 +883,10 @@
     </div>
 
     <!-- Step 5: Final Shaker Experience -->
-    <div id="step-5" class="step bg-gray-50">
+    <div id="step-5" class="step relative overflow-hidden">
+        <!-- Techy Background -->
+        <div class="absolute inset-0 techy-bg"></div>
+        
         <!-- Top Right Buttons -->
         <div class="fixed top-4 right-4 z-50 flex gap-2">
             <button id="share-btn" class="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center" aria-label="Share" style="width: 48px; height: 48px;">
@@ -864,28 +907,30 @@
             Your browser does not support the audio element.
         </audio>
         
-        <!-- Action Bar (Top on mobile, bottom on desktop) -->
-        <div class="action-bar md:order-2">
-            <div class="flex justify-center gap-4 md:gap-6">
-                <button id="download-video-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Download Video">
-                    <span class="material-icons" style="color: #047857;">download</span>
-                    <span class="text-xs font-medium text-gray-700">Download</span>
-                </button>
-                <button id="shake-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Shake">
-                    <span class="material-icons" style="color: #047857;">vibration</span>
-                    <span class="text-xs font-medium text-gray-700">Shake</span>
-                </button>
-            </div>
-            <div class="mt-4 flex justify-center">
-                <button id="make-another-btn" class="btn-mui-outlined py-2 px-6">
-                    <span class="material-icons" style="vertical-align: middle; margin-right: 8px; font-size: 18px;">add</span>
-                    Make Another One
-                </button>
+        <!-- Action Bar (Bottom of screen) -->
+        <div class="action-bar fixed bottom-0 left-0 right-0" style="z-index: 1000;">
+            <div class="flex flex-col gap-3">
+                <div class="flex justify-center gap-4 md:gap-6">
+                    <button id="download-video-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Download Video">
+                        <span class="material-icons" style="color: #047857;">download</span>
+                        <span class="text-xs font-medium text-gray-700">Download</span>
+                    </button>
+                    <button id="shake-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Shake">
+                        <span class="material-icons" style="color: #047857;">vibration</span>
+                        <span class="text-xs font-medium text-gray-700">Shake</span>
+                    </button>
+                </div>
+                <div class="flex justify-center">
+                    <button id="make-another-btn" class="btn-mui-outlined py-2 px-6">
+                        <span class="material-icons" style="vertical-align: middle; margin-right: 8px; font-size: 18px;">add</span>
+                        Make Another One
+                    </button>
+                </div>
             </div>
         </div>
         
         <!-- Canvas Container -->
-        <div class="flex-1 flex flex-col items-center justify-center px-4 py-20 md:py-8">
+        <div class="flex-1 flex flex-col items-center justify-center px-4 pb-32 md:pb-8 pt-20 md:pt-8 relative z-10">
             <div id="holographic-wrapper" class="relative mb-4" style="max-width: 90vw; max-height: 70vh;">
                 <canvas id="canvas" width="720" height="720" class="bg-white" style="width: auto; height: auto; object-fit: contain; display: block;"></canvas>
                 <!-- Holographic overlay layers -->
@@ -894,7 +939,7 @@
                 <div class="holo-overlay holo-sparkle"></div>
             </div>
             <div id="custom-message-display" class="text-center max-w-2xl px-4" style="display: none;">
-                <p class="text-lg text-gray-800 font-medium whitespace-pre-wrap break-words"></p>
+                <p class="text-lg text-white font-medium whitespace-pre-wrap break-words"></p>
             </div>
         </div>
     </div>
