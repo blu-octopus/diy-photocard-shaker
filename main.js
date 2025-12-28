@@ -80,37 +80,41 @@ async function initializeApp() {
     state.emojiCanvas.height = 100;
     state.emojiCtx = state.emojiCanvas.getContext('2d');
     
-    // Initialize home page background charms canvas
-    state.homeBgCanvas = document.getElementById('home-bg-charms');
-    if (state.homeBgCanvas) {
-        state.homeBgCtx = state.homeBgCanvas.getContext('2d');
-        // Set canvas size to match viewport
-        const resizeHomeBg = () => {
-            if (!state.homeBgCanvas) return;
-            state.homeBgCanvas.width = window.innerWidth;
-            state.homeBgCanvas.height = window.innerHeight;
-            // Update physics world boundaries if engine exists
-            if (state.homeBgEngine && state.homeBgWorld) {
-                // Remove old walls and recreate
-                if (state.homeBgBodies.length > 0) {
-                    // Walls are stored separately, but we'll recreate them
-                    const World = Matter.World;
-                    const Bodies = Matter.Bodies;
-                    const wallThickness = 100;
-                    const canvasWidth = state.homeBgCanvas.width;
-                    const canvasHeight = state.homeBgCanvas.height;
-                    
-                    // Clear old walls (they're static, so we'll just recreate the world boundaries)
-                    // For simplicity, we'll just update the canvas size
-                    // The walls are positioned outside viewport so they should still work
+    // Initialize home page background charms canvas (skip for ana branch demo)
+    // Only initialize if we're loading from hash (not Ana's direct card)
+    const isLoadingFromHash = window.location.hash && window.location.hash.length > 1;
+    if (isLoadingFromHash) {
+        state.homeBgCanvas = document.getElementById('home-bg-charms');
+        if (state.homeBgCanvas) {
+            state.homeBgCtx = state.homeBgCanvas.getContext('2d');
+            // Set canvas size to match viewport
+            const resizeHomeBg = () => {
+                if (!state.homeBgCanvas) return;
+                state.homeBgCanvas.width = window.innerWidth;
+                state.homeBgCanvas.height = window.innerHeight;
+                // Update physics world boundaries if engine exists
+                if (state.homeBgEngine && state.homeBgWorld) {
+                    // Remove old walls and recreate
+                    if (state.homeBgBodies.length > 0) {
+                        // Walls are stored separately, but we'll recreate them
+                        const World = Matter.World;
+                        const Bodies = Matter.Bodies;
+                        const wallThickness = 100;
+                        const canvasWidth = state.homeBgCanvas.width;
+                        const canvasHeight = state.homeBgCanvas.height;
+                        
+                        // Clear old walls (they're static, so we'll just recreate the world boundaries)
+                        // For simplicity, we'll just update the canvas size
+                        // The walls are positioned outside viewport so they should still work
+                    }
                 }
-            }
-        };
-        resizeHomeBg();
-        window.addEventListener('resize', resizeHomeBg);
-        
-        // Initialize background physics
-        initializeHomeBackgroundCharms();
+            };
+            resizeHomeBg();
+            window.addEventListener('resize', resizeHomeBg);
+            
+            // Initialize background physics
+            initializeHomeBackgroundCharms();
+        }
     }
     
     // Initialize Audio Context for sound effects
@@ -136,6 +140,9 @@ async function initializeApp() {
         loadFromHash();
         return;
     }
+    
+    // Load Ana's card directly (for ana branch demo)
+    loadAnasCard();
     
     // Initialize shake detection - use DeviceMotionEvent for real shake detection
     setupDeviceShakeDetection();
@@ -372,6 +379,12 @@ function goToStep(step) {
     if (state.currentStep === 5 && step !== 5 && state.backgroundMusic) {
         state.backgroundMusic.pause();
         state.backgroundMusic.currentTime = 0; // Reset to beginning
+    }
+    
+    // Reset gravity to default when leaving step 5
+    if (state.currentStep === 5 && step !== 5 && state.engine) {
+        state.engine.world.gravity.y = 0.3; // Default gravity
+        state.engine.world.gravity.x = 0; // No horizontal gravity
     }
     
     // Hide all steps (full page transition)
@@ -771,6 +784,11 @@ function initializeFinalView() {
     state.canvas.height = canvasHeight;
     
     // Wrapper will automatically size to canvas via CSS
+    // Reset gravity to default when entering final view
+    if (state.engine) {
+        state.engine.world.gravity.y = 0.3; // Default gravity (bottom)
+        state.engine.world.gravity.x = 0; // No horizontal gravity initially
+    }
     // Initialize charm physics
     updateCharmBodies();
     
@@ -1158,17 +1176,57 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
+// Update gravity based on device orientation (mobile only)
+// Gradual response: tilting device changes gravity direction smoothly
+function updateGravityFromOrientation(beta, gamma) {
+    if (!state.engine || state.currentStep !== 5) return;
+    
+    // Detect mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile) return; // Only apply on mobile devices
+    
+    // Default gravity (when upright)
+    const defaultGravityY = 0.3;
+    const maxGravity = 0.5; // Maximum gravity strength
+    
+    // Beta (pitch): forward/backward tilt
+    // -90 to 90 degrees: negative = tilted back (top up), positive = tilted forward (top down)
+    // Map to gravity Y: when tilted forward (positive beta), increase Y gravity (charms fall down)
+    // When tilted back (negative beta), decrease Y gravity (charms fall up)
+    const betaNormalized = Math.max(-90, Math.min(90, beta || 0)) / 90; // Normalize to -1 to 1
+    const targetGravityY = defaultGravityY + (betaNormalized * maxGravity * 0.4); // Gradual change
+    
+    // Gamma (roll): left/right tilt
+    // -90 to 90 degrees: negative = tilted left, positive = tilted right
+    // Map to gravity X: when tilted right (positive gamma), positive X gravity (charms fall right)
+    // When tilted left (negative gamma), negative X gravity (charms fall left)
+    const gammaNormalized = Math.max(-90, Math.min(90, gamma || 0)) / 90; // Normalize to -1 to 1
+    const targetGravityX = gammaNormalized * maxGravity * 0.3; // Gradual change, less strong than Y
+    
+    // Smooth interpolation for gradual response (avoid jitter)
+    const smoothingFactor = 0.1;
+    state.engine.world.gravity.y += (targetGravityY - state.engine.world.gravity.y) * smoothingFactor;
+    state.engine.world.gravity.x += (targetGravityX - state.engine.world.gravity.x) * smoothingFactor;
+    
+    // Clamp gravity values to reasonable ranges
+    state.engine.world.gravity.y = Math.max(-0.2, Math.min(0.7, state.engine.world.gravity.y));
+    state.engine.world.gravity.x = Math.max(-0.5, Math.min(0.5, state.engine.world.gravity.x));
+}
+
 function setupParallax() {
     let tiltX = 0;
     let tiltY = 0;
     
-    // Device orientation
+    // Device orientation (mobile)
     if (window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', (e) => {
             if (state.currentStep === 5) {
                 tiltX = (e.gamma || 0) / 45;
                 tiltY = (e.beta || 0) / 45;
-            applyParallax(tiltX, tiltY);
+                applyParallax(tiltX, tiltY);
+                
+                // Update gravity based on device tilt (mobile only, gradual response)
+                updateGravityFromOrientation(e.beta, e.gamma);
             }
         });
     }
@@ -1673,7 +1731,9 @@ function generateShareLink() {
             uiVisible: state.uiVisible !== undefined ? state.uiVisible : true
     };
     
-    const encoded = btoa(JSON.stringify(stateData));
+    // Use encodeURIComponent to properly handle Unicode characters (Chinese, emoji, special chars like *+'`, etc.)
+    // encodeURIComponent handles all special characters correctly, including * + ' ` and other ASCII/Unicode symbols
+    const encoded = btoa(encodeURIComponent(JSON.stringify(stateData)));
     const shareUrl = window.location.origin + window.location.pathname + '#' + encoded;
     
         // Check if URL is too long (browser limit is typically ~2000-8000 chars, use 6000 for safety)
@@ -1694,7 +1754,9 @@ function generateShareLink() {
             quality = 0.4;
             imageDataUrl = shareCanvas.toDataURL('image/jpeg', quality);
             stateData.image = imageDataUrl;
-            const newEncoded = btoa(JSON.stringify(stateData));
+            // Use encodeURIComponent to properly handle Unicode characters (Chinese, emoji, special chars like *+'`, etc.)
+            // encodeURIComponent handles all special characters correctly, including * + ' ` and other ASCII/Unicode symbols
+            const newEncoded = btoa(encodeURIComponent(JSON.stringify(stateData)));
             const newShareUrl = window.location.origin + window.location.pathname + '#' + newEncoded;
             
             if (newShareUrl.length > 6000) {
@@ -1888,6 +1950,66 @@ function copyShareLink() {
     }
 }
 
+// Load Ana's card directly (for ana branch demo)
+function loadAnasCard() {
+    // Load cat.jpg image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onerror = () => {
+        console.error('Failed to load cat.jpg');
+        alert('Failed to load card image. Please check that assets/cat.jpg exists.');
+    };
+    
+    img.onload = () => {
+        // Resize to max 720px width
+        const maxWidth = 720;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+        }
+        
+        const resizedCanvas = document.createElement('canvas');
+        resizedCanvas.width = width;
+        resizedCanvas.height = height;
+        const resizedCtx = resizedCanvas.getContext('2d');
+        resizedCtx.drawImage(img, 0, 0, width, height);
+        
+        // Set state
+        state.image = resizedCanvas;
+        state.filter = 'none'; // No filter, or you can change to 'glow', 'ccd', etc.
+        state.charms = '生日快樂24'.split(''); // Each character will generate 3 charms
+        state.customMessage = 'Happy birthday Ana! Looking forward to spending more years with you!';
+        state.charmColor = 'rainbow'; // Or '#7ED321' for green, '#FF6B9D' for pink, etc.
+        state.musicMuted = false; // Music will play
+        state.uiVisible = true; // Show action bar
+        
+        // Display custom message
+        const messageDisplay = document.getElementById('custom-message-display');
+        if (messageDisplay) {
+            messageDisplay.style.display = 'block';
+            const messageP = messageDisplay.querySelector('p');
+            if (messageP) {
+                messageP.textContent = state.customMessage;
+            }
+        }
+        
+        // Go directly to final view (step 5)
+        goToStep(5);
+        
+        // Initialize final view after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            initializeFinalView();
+        }, 100);
+    };
+    
+    // Load image
+    img.src = 'assets/cat.jpg';
+}
+
 function loadFromHash() {
     try {
         const hash = window.location.hash.substring(1);
@@ -1896,7 +2018,9 @@ function loadFromHash() {
             return;
         }
         
-        const decoded = JSON.parse(atob(hash));
+        // Use decodeURIComponent to properly handle Unicode characters (Chinese, emoji, special chars like *+'`, etc.)
+        // decodeURIComponent correctly decodes all special characters, including * + ' ` and other ASCII/Unicode symbols
+        const decoded = JSON.parse(decodeURIComponent(atob(hash)));
         
         // Validate required data
         if (!decoded.image) {
