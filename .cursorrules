@@ -1,47 +1,107 @@
 {
-  "project": "ShakeCard Web App",
-  "description": "A mobile-first static web app that lets users upload a photo, apply filters, add emoji/symbol charms, and generate live shaker photo cards with parallax and physics-based animations. Must be deployable on GitHub Pages or Netlify and shareable via link.",
-  "techStack": ["HTML", "Tailwind CSS", "Vanilla JavaScript", "Canvas API", "matter.js", "shake.js", "CCapture.js"],
+  "project": "Digital Holiday Greeting Interactive Card",
+  "description": "A single-page interactive digital greeting card with physics-based floating text charms, parallax effects, and background music. The card loads a pre-configured image and displays floating text characters that respond to shake interactions and device motion.",
+  "techStack": ["HTML", "Tailwind CSS", "Vanilla JavaScript", "Canvas API", "Matter.js"],
   "rules": [
     {
-      "context": "HTML structure",
-      "rule": "Use semantic HTML5 layout (header, main, footer). Ensure mobile-first responsiveness with Tailwind."
+      "context": "Project Structure",
+      "rule": "Single-page application with one full-screen view. No multi-step flow. Card loads directly on page load."
     },
     {
-      "context": "Image upload",
-      "rule": "Restrict upload to .jpg/.png/.webp. Limit size to 3MB. Resize images to max 720px width using canvas before rendering."
+      "context": "Core Functions - Initialization",
+      "rule": "initializeApp() - Sets up canvas, Matter.js physics engine, event listeners, loads card data, and starts animation loop. Called on DOMContentLoaded."
     },
     {
-      "context": "Filter system",
-      "rule": "Implement 5 visual filters (ccd, mono, blur, glow sparkle, 8k) using CSS filters or canvas effects."
+      "context": "Core Functions - Card Loading",
+      "rule": "loadAnasCard() - Loads assets/cat.jpg image, resizes to max 720px width maintaining aspect ratio, sets state (image, charms array, custom message, charm color), and calls initializeFinalView()."
     },
     {
-      "context": "Charm picker",
-      "rule": "Allow input of up to 15 text characters (ASCII symbols). Show quick-pick preset buttons first with ASCII symbol sets (no repeats). Each character generates exactly 3 charm objects. Color selection comes second, arranged in rainbow order (Red, Orange, Yellow, Green, Blue, Indigo, Pink, Rainbow)."
+      "context": "Core Functions - Canvas Setup",
+      "rule": "initializeFinalView() - Sets canvas internal dimensions to match image exactly (1:1 pixel mapping), initializes charm physics bodies, renders initial canvas, displays custom message, and starts background music."
     },
     {
-      "context": "Animation",
-      "rule": "Use DeviceOrientation or mousemove for parallax. Use matter.js for gravity and bounce physics of emoji charms. Use shake.js or button for triggering a simulated shake."
+      "context": "Core Functions - Rendering",
+      "rule": "renderCanvas() - Clears canvas, draws image with filter, updates charm bodies if needed, draws all charms, and applies anti-stuck corner detection. Called every animation frame."
     },
     {
-      "context": "Export",
-      "rule": "Use CCapture.js to export a 5-second .webm animation showing shake movement with ease-in-out."
+      "context": "Core Functions - Physics",
+      "rule": "updateCharmBodies() - Creates Matter.js physics bodies for each character in state.charms array. Each character generates exactly 1 charm object. Creates wall boundaries at canvas edges. Only recreates bodies when charms array changes (uses hash check)."
     },
     {
-      "context": "Shareability",
-      "rule": "Encode current card settings in URL hash. On load, decode hash to restore photo, filter, and charms. Ensure the generated link is fully functional and live."
+      "context": "Core Functions - Charm Rendering",
+      "rule": "drawCharms() - Iterates through charmBodies, positions each charm based on physics position, applies rotation, and calls renderEmojiOnCanvas() to draw each character."
     },
     {
-      "context": "Analytics",
-      "rule": "Use Plausible Analytics. Add <script> in <head> and trigger custom events like PhotocardCreated, ShakeTriggered, and VideoExported."
+      "context": "Core Functions - Text Rendering",
+      "rule": "renderEmojiOnCanvas(ctx, emoji, x, y, fontSize, colorOverride) - Renders text characters on canvas. Uses Hoefler Text as default font with serif fallbacks. Handles CJK characters with appropriate fonts. Uses getEmojiImage() for caching."
     },
     {
-      "context": "Deployment",
-      "rule": "Ensure the app is deployable as a static site on GitHub Pages or Netlify with no backend dependencies."
+      "context": "Core Functions - Shake Interaction",
+      "rule": "triggerShake() - Applies random forces to all charm bodies. Pushes charms away from corners if stuck. Plays shake sound effect. Prevents multiple simultaneous shakes."
     },
     {
-      "context": "UI/UX",
-      "rule": "Design should be MAC OS-style ¡V clean, rounded, white/grey background, swipeable filters, large touchable areas, centered canvas."
+      "context": "Core Functions - Device Motion",
+      "rule": "setupDeviceShakeDetection() - Listens to DeviceMotionEvent. Detects actual phone shake movements and applies corresponding forces to charms. Requests iOS permission on first touch. Plays sound on significant shake."
+    },
+    {
+      "context": "Core Functions - Parallax",
+      "rule": "setupParallax() - Sets up device orientation (mobile) and mouse move (desktop) listeners. Calls applyParallax() to tilt holographic wrapper. Calls updateGravityFromOrientation() for mobile gravity adjustment."
+    },
+    {
+      "context": "Core Functions - Gravity",
+      "rule": "updateGravityFromOrientation(beta, gamma) - Adjusts Matter.js gravity based on device tilt (mobile only). Gradual response with smoothing. Desktop has no gravity orientation."
+    },
+    {
+      "context": "Core Functions - Music",
+      "rule": "initializeBackgroundMusic() - Loads and plays assets/8-bit happy birthday.mp3 loop. toggleMusic() - Toggles mute state. updateSoundIcon() - Updates volume icon based on mute state."
+    },
+    {
+      "context": "Core Functions - Animation",
+      "rule": "animate() - Main animation loop. Updates Matter.js engine, calls renderCanvas(). Runs continuously via requestAnimationFrame."
+    },
+    {
+      "context": "State Management",
+      "rule": "state object contains: image (canvas), filter, charms (array), engine/world (Matter.js), canvas/ctx, charmBodies, walls, customMessage, charmColor, backgroundMusic, musicMuted, emojiCache, audioContext."
+    },
+    {
+      "context": "Font System",
+      "rule": "Default font is Hoefler Text for all charm text. Font stack: 'Hoefler Text', serif, then serif fallbacks (Baskerville, Bodoni MT, etc.), then Chinese serif fonts if available, then Chinese sans-serif fallbacks. Applied in getEmojiImage() and renderEmojiOnCanvas()."
+    },
+    {
+      "context": "Charm Physics",
+      "rule": "Each character in charms array generates exactly 1 physics body. Oil-like slow movement: gravity 0.3, restitution 0.3, friction 0.1, frictionAir 0.15, density 0.001. Size variation: 12-25px radius. Walls positioned at canvas boundaries (0, width, height)."
+    },
+    {
+      "context": "Canvas Dimensions",
+      "rule": "Canvas internal resolution (canvas.width/height) matches image dimensions exactly for 1:1 pixel mapping. CSS handles display size (max-width: 90vw, max-height: 70vh). Canvas dimensions set in initializeFinalView() and validated in renderCanvas()."
+    },
+    {
+      "context": "Visual Effects",
+      "rule": "Holographic effects: shine animation, glow on mouse position, sparkle particles. Applied via CSS overlays on #holographic-wrapper. Activated on hover/tilt. Techy background: dark blue gradient with grid pattern and radial glow."
+    },
+    {
+      "context": "HTML Structure",
+      "rule": "Single step-5 div with techy-bg background. Canvas in holographic-wrapper. Sound toggle button top-right. Shake button fixed bottom-center. Custom message display below canvas. Background audio element."
+    },
+    {
+      "context": "Styling",
+      "rule": "Tailwind CSS for layout. Custom CSS for techy background, holographic effects, animations. Hoefler Text as default body font. Mobile-first responsive design."
+    },
+    {
+      "context": "Dependencies",
+      "rule": "Matter.js 0.19.0 (CDN) for physics. Tailwind CSS (CDN) for styling. Material Icons (Google Fonts) for icons. No other external dependencies."
+    },
+    {
+      "context": "Image Loading",
+      "rule": "loadAnasCard() loads assets/cat.jpg. Resizes to max 720px width maintaining aspect ratio. Creates canvas element with exact dimensions. Sets state.image to canvas element."
+    },
+    {
+      "context": "Charm Configuration",
+      "rule": "Charms set as: 'HAPPY 24 BIRTHDAY'.split('') - each character becomes one charm. Charm color: 'rainbow' (pastel colors). Custom message: 'Happy Birthday Ana! Looking forward to spending more time with you!'"
+    },
+    {
+      "context": "Code Organization",
+      "rule": "Keep functions focused and single-purpose. State management centralized in state object. No step navigation code. No upload/filter/charm selection UI. No share link generation. No video export. No analytics tracking."
     }
   ]
 }

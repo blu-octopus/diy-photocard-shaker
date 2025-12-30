@@ -3,243 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shaker Card-Maker - Create Live Shaker Photo Cards</title>
+    <title>Shaker Card</title>
+    <!-- Preload image for faster loading -->
+    <link rel="preload" href="assets/doodle.jpg" as="image">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet" preload>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/shake.js@1.2.2/shake.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ccapture.js@1.1.0/build/CCapture.all.min.js"></script>
-    <!-- Plausible Analytics - Optional: Replace 'your-domain.com' with your actual domain, or remove if using only GA4 -->
-    <!-- <script defer data-domain="your-domain.com" src="https://plausible.io/js/script.js"></script> -->
-    <!-- Google Analytics 4 - Replace G-XXXXXXXXXX with your Measurement ID -->
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-15HJ72DCWN"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-15HJ72DCWN');
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-        }
-        body {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            overscroll-behavior: none;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
+        
+        body {
+            font-family: 'Hoefler Text', 'Baskerville', 'Bodoni MT', 'Didot', 'Goudy Old Style', Garamond, 'Times New Roman', serif;
+            overflow: hidden;
+        }
+        
+        .step {
+            display: none;
+        }
+        
+        .step.active {
+            display: flex;
+        }
+        
         /* Techy Background */
         .techy-bg {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #1a1a2e 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            position: relative;
+            overflow: hidden;
         }
+        
         .techy-bg::before {
             content: '';
             position: absolute;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-image: 
                 linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
             background-size: 50px 50px;
             opacity: 0.3;
         }
+        
         .techy-bg::after {
             content: '';
             position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
-            animation: pulseGlow 8s ease-in-out infinite;
-        }
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        @keyframes pulseGlow {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-        /* Tiltable Card */
-        .home-tilt-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-                        0 0 0 1px rgba(255, 255, 255, 0.1);
-            max-width: 600px;
-            width: 100%;
-            transform-style: preserve-3d;
-            transition: transform 0.1s ease-out;
-            will-change: transform;
-        }
-        /* Mobile-specific: 70% max width */
-        @media (max-width: 768px) {
-            .home-tilt-card {
-                max-width: 70vw;
-            }
-        }
-        .home-tilt-card:hover {
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
-                        0 0 0 1px rgba(255, 255, 255, 0.2);
-        }
-        /* Ensure emojis render properly in Chrome */
-        .emoji, [data-charms], #charm-input {
-            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', 'Android Emoji', 'Twemoji Mozilla', emoji, sans-serif !important;
-            font-feature-settings: 'liga' off;
-            -webkit-font-feature-settings: 'liga' off;
-        }
-        .step {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-            height: 100vh;
-            -webkit-overflow-scrolling: touch;
-        }
-        .step.active {
-            display: flex;
-            flex-direction: column;
-        }
-        .progress-bar {
-            height: 4px;
-            background: #e0e0e0;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #059669, #047857);
-            transition: width 0.3s ease;
-        }
-        .btn-mui {
-            background: #059669;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
-            transition: all 0.2s ease;
-            min-width: 64px;
-            position: relative;
-            z-index: 10;
-            pointer-events: auto;
-            touch-action: manipulation;
-        }
-        .btn-mui:hover {
-            background: #047857;
-            box-shadow: 0 4px 8px rgba(5, 150, 105, 0.4);
-        }
-        .btn-mui:active {
-            box-shadow: 0 1px 2px rgba(5, 150, 105, 0.3);
-        }
-        .btn-mui:disabled {
-            background: #e0e0e0;
-            color: #9e9e9e;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-        .btn-mui-outlined {
-            background: transparent;
-            color: #059669;
-            border: 1px solid #059669;
-            box-shadow: none;
-            position: relative;
-            z-index: 10;
-            pointer-events: auto;
-            touch-action: manipulation;
-        }
-        .btn-mui-outlined:hover {
-            background: rgba(5, 150, 105, 0.08);
-        }
-        .btn-mui-text {
-            background: transparent;
-            color: #059669;
-            box-shadow: none;
-            padding: 8px 16px;
-        }
-        .btn-mui-text:hover {
-            background: rgba(5, 150, 105, 0.08);
-        }
-        .filter-preview {
-            border-radius: 8px;
-            overflow: hidden;
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-        }
-        .filter-preview:active {
-            transform: scale(0.95);
-        }
-        .filter-preview.active {
-            border-color: #059669;
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
         }
         
-        /* Selected states for charm color buttons */
-        .charm-color-btn.active,
-        .charm-color-btn.selected {
-            border-color: #059669 !important;
-            border-width: 3px !important;
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3), 0 4px 8px rgba(5, 150, 105, 0.2);
-            transform: scale(1.05);
-            font-weight: 600;
-        }
-        
-        /* Selected states for charm preset buttons */
-        .charm-preset-btn.active,
-        .charm-preset-btn.selected {
-            border: 3px solid #059669;
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3), 0 4px 12px rgba(5, 150, 105, 0.25);
-            transform: scale(1.05);
-            font-weight: 600;
-        }
-        .charm-preset-scroll {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .charm-preset-scroll::-webkit-scrollbar {
-            display: none;
-        }
+        /* Holographic Effects */
         #holographic-wrapper {
-            border-radius: 8px;
-            overflow: hidden;
-            transform-style: preserve-3d;
-            transition: transform 0.1s ease-out;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
             display: inline-block;
-            position: relative;
-        }
-        #holographic-wrapper:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-        }
-        #canvas {
-            border-radius: 8px;
-            display: block;
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            height: 100%;
         }
         
-        /* Holographic overlay effects */
         .holo-overlay {
             position: absolute;
             top: 0;
@@ -247,657 +75,337 @@
             right: 0;
             bottom: 0;
             pointer-events: none;
-            border-radius: 8px;
-            z-index: 2;
-            mix-blend-mode: overlay;
+            border-radius: 12px;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s;
         }
         
-        #holographic-wrapper:hover .holo-overlay {
+        #holographic-wrapper:hover .holo-overlay,
+        #holographic-wrapper.tilted .holo-overlay {
             opacity: 1;
         }
         
-        /* Shine effect - rainbow gradient that moves */
         .holo-shine {
-            background: linear-gradient(
-                105deg,
-                transparent 40%,
-                rgba(255, 255, 255, 0.3) 45%,
-                rgba(255, 255, 255, 0.5) 50%,
-                rgba(255, 255, 255, 0.3) 55%,
-                transparent 60%
-            );
-            background-size: 200% 200%;
-            animation: holo-shine 3s infinite;
-            mix-blend-mode: overlay;
+            background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.5) 45%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0.5) 55%, transparent 60%);
+            background-size: 200% 100%;
+            animation: shine 3s infinite;
         }
         
-        @keyframes holo-shine {
-            0% { background-position: 0% 0%; }
-            50% { background-position: 100% 100%; }
-            100% { background-position: 0% 0%; }
-        }
-        
-        /* Glow effect - colorful gradient overlay */
         .holo-glow {
-            background: linear-gradient(
-                45deg,
-                rgba(255, 0, 150, 0.1) 0%,
-                rgba(0, 255, 255, 0.1) 25%,
-                rgba(255, 255, 0, 0.1) 50%,
-                rgba(255, 0, 150, 0.1) 75%,
-                rgba(0, 255, 255, 0.1) 100%
-            );
-            background-size: 400% 400%;
-            animation: holo-glow 8s ease infinite;
-            mix-blend-mode: color-dodge;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.4), transparent 70%);
         }
         
-        @keyframes holo-glow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        
-        /* Sparkle effect - rainbow prismatic */
         .holo-sparkle {
-            background: 
-                linear-gradient(0deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%),
-                linear-gradient(90deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%),
-                radial-gradient(circle at 20% 50%, rgba(255, 0, 150, 0.3), transparent 50%),
-                radial-gradient(circle at 80% 50%, rgba(0, 255, 255, 0.3), transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(255, 255, 0, 0.3), transparent 50%);
-            background-size: 200% 200%, 200% 200%, 100% 100%, 100% 100%, 100% 100%;
-            animation: holo-sparkle 6s ease-in-out infinite;
-            mix-blend-mode: screen;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.7) 1px, transparent 1px);
+            background-size: 200% 200%;
+            animation: sparkle 4s infinite;
         }
         
-        @keyframes holo-sparkle {
-            0%, 100% { 
-                background-position: 0% 0%, 0% 0%, 20% 50%, 80% 50%, 40% 80%;
-                opacity: 0.5;
-            }
-            50% { 
-                background-position: 100% 100%, 100% 100%, 80% 50%, 20% 50%, 60% 20%;
-                opacity: 0.8;
-            }
+        @keyframes shine {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
         
-        /* Shifting hue animation for sparkle icon, title, and CTA button */
-        /* Morandi pastel palette with WCAG AA compliance - subtle translation */
-        @keyframes shift-hue {
-            0% { 
-                filter: hue-rotate(-10deg) saturate(0.75) brightness(1.15);
-            }
-            50% { 
-                filter: hue-rotate(10deg) saturate(0.75) brightness(1.15);
-            }
-            100% { 
-                filter: hue-rotate(-10deg) saturate(0.75) brightness(1.15);
-            }
+        @keyframes sparkle {
+            0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+            50% { background-position: 100% 100%, 0% 0%, 25% 75%; }
         }
         
-        .hue-shift {
-            animation: shift-hue 10s ease-in-out infinite;
-            will-change: filter;
+        canvas {
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
         
-        /* Subtle shake animation for "Shaker" title */
-        @keyframes subtle-shake {
-            0%, 100% { 
-                transform: translate(0, 0) rotate(0deg);
-            }
-            10% { 
-                transform: translate(-0.5px, 0.5px) rotate(-0.3deg);
-            }
-            20% { 
-                transform: translate(0.5px, -0.5px) rotate(0.3deg);
-            }
-            30% { 
-                transform: translate(-0.3px, 0.3px) rotate(-0.2deg);
-            }
-            40% { 
-                transform: translate(0.3px, -0.3px) rotate(0.2deg);
-            }
-            50% { 
-                transform: translate(-0.4px, 0.4px) rotate(-0.25deg);
-            }
-            60% { 
-                transform: translate(0.4px, -0.4px) rotate(0.25deg);
-            }
-            70% { 
-                transform: translate(-0.2px, 0.2px) rotate(-0.15deg);
-            }
-            80% { 
-                transform: translate(0.2px, -0.2px) rotate(0.15deg);
-            }
-            90% { 
-                transform: translate(-0.3px, 0.3px) rotate(-0.2deg);
-            }
+        #shake-btn {
+            font-family: 'Hoefler Text', 'Baskerville', 'Bodoni MT', 'Didot', 'Goudy Old Style', Garamond, 'Times New Roman', serif;
         }
         
-        @keyframes vigorous-shake {
-            0%, 100% { 
-                transform: translate(0, 0) rotate(0deg);
-            }
-            10% { 
-                transform: translate(-1.5px, 1.5px) rotate(-0.8deg);
-            }
-            20% { 
-                transform: translate(1.5px, -1.5px) rotate(0.8deg);
-            }
-            30% { 
-                transform: translate(-1px, 1px) rotate(-0.6deg);
-            }
-            40% { 
-                transform: translate(1px, -1px) rotate(0.6deg);
-            }
-            50% { 
-                transform: translate(-1.2px, 1.2px) rotate(-0.7deg);
-            }
-            60% { 
-                transform: translate(1.2px, -1.2px) rotate(0.7deg);
-            }
-            70% { 
-                transform: translate(-0.8px, 0.8px) rotate(-0.5deg);
-            }
-            80% { 
-                transform: translate(0.8px, -0.8px) rotate(0.5deg);
-            }
-            90% { 
-                transform: translate(-1px, 1px) rotate(-0.6deg);
-            }
-        }
-        
-        .shake-title {
-            display: inline-block;
-            animation: subtle-shake 3s ease-in-out infinite;
-            will-change: transform;
-        }
-        
-        .shake-title:hover {
-            animation: vigorous-shake 2s ease-in-out infinite;
-        }
-        
-        @keyframes shimmer {
-            0% {
-                background-position: -200% center;
-            }
-            100% {
-                background-position: 200% center;
-            }
-        }
-        
-        #start-btn {
-            backdrop-filter: blur(10px);
-            background: linear-gradient(135deg, 
-                rgba(16, 185, 129, 0.95) 0%, 
-                rgba(5, 150, 105, 0.95) 50%, 
-                rgba(4, 120, 87, 0.95) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            position: relative;
-            overflow: hidden;
-            color: #ffffff;
-            font-weight: 600;
-        }
-        
-        #start-btn::after {
-            content: '';
-            position: absolute;
+        /* Intro Envelope Screen */
+        #intro-screen {
+            position: fixed;
             top: 0;
-            left: -100%;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.4),
-                transparent
-            );
-            animation: shimmer 3s ease-in-out infinite;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s;
         }
         
-        #start-btn:hover {
-            box-shadow: 0 0 20px rgba(5, 150, 105, 0.5),
-                        0 0 40px rgba(5, 150, 105, 0.4),
-                        inset 0 0 20px rgba(255, 255, 255, 0.2);
+        #intro-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
         
-        #start-btn span {
+        #intro-screen.opening .envelope-top {
+            transform: rotateX(-180deg) translateY(-50%);
+            transform-origin: bottom center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #intro-screen.opening .envelope-bottom {
+            transform: translateY(10px);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #intro-screen.opening .envelope-content {
+            opacity: 1;
+            transform: translate(-50%, 0) rotateX(-180deg) translateY(-50%);
+            transform-origin: bottom center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+        }
+        
+        #intro-screen.flashing {
+            animation: flash 0.3s ease-out;
+        }
+        
+        #intro-screen.flashing .envelope-container {
+            opacity: 0;
+            transform: scale(1.2);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        
+        @keyframes flash {
+            0%, 100% {
+                background-color: transparent;
+            }
+            50% {
+                background-color: rgba(255, 255, 255, 0.8);
+            }
+        }
+        
+        .envelope-container {
             position: relative;
-            z-index: 1;
+            width: 90%;
+            max-width: 400px;
+            perspective: 1000px;
         }
         
-        /* Enhanced tilt effect with holographic response */
-        #holographic-wrapper.tilted {
-            filter: brightness(1.1) contrast(1.05);
+        .envelope {
+            position: relative;
+            width: 100%;
+            padding-bottom: 70%;
+            transform-style: preserve-3d;
+            animation: float 3s ease-in-out infinite;
         }
         
-        #holographic-wrapper.tilted .holo-overlay {
-            opacity: 0.7;
+        .envelope-front {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 12px;
+            transform-style: preserve-3d;
         }
-        .loading-spinner {
-            border: 4px solid #e3f2fd;
-            border-top: 4px solid #1976d2;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        
+        .envelope-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px 12px 0 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+            transform-origin: bottom center;
+            transform-style: preserve-3d;
+            z-index: 3;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        .envelope-top .swipe-icon {
+            position: absolute;
+            top: 100px;
+            left: 45%;
+            transform: translateX(-40%);
+            z-index: 5;
         }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .action-bar {
-            position: fixed;
+        
+        .envelope-bottom {
+            position: absolute;
             bottom: 0;
             left: 0;
-            right: 0;
+            width: 100%;
+            height: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 12px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-top: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .envelope-content {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translate(-50%, 0);
+            text-align: center;
+            z-index: 4;
+            width: 100%;
+            padding: 2rem;
+            padding-top: 3rem;
+            pointer-events: none;
+            transform-origin: bottom center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+        }
+        
+        .envelope-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-family: 'Hoefler Text', serif;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .envelope-subtitle {
+            font-size: 1rem;
+            color: #475569;
+            margin-top: 70px;
+            margin-bottom: 2rem;
+            font-family: 'Hoefler Text', serif;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+        
+        .swipe-prompt {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+            position: relative;
+        }
+        
+        .swipe-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+            animation: swipe-bounce 1.5s ease-in-out infinite;
+        }
+        
+        .swipe-text {
+            font-size: 1.1rem;
+            color: #1e293b;
+            font-weight: 600;
+            font-family: 'Hoefler Text', serif;
+        }
+        
+        /* Sparkle particles */
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
             background: white;
-            border-top: 1px solid #e0e0e0;
-            padding: 16px;
-            z-index: 1000;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            pointer-events: auto;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle-float 3s ease-in-out infinite;
         }
-        .action-bar button {
-            pointer-events: auto;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
         }
-        @media (min-width: 768px) {
-            .action-bar {
-                position: relative;
-                border-top: none;
-                border-radius: 8px;
-                margin-top: 24px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
-            /* Keep action bar at bottom for step-5 (card generated screen) */
-            #step-5 .action-bar {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                border-top: 1px solid #e0e0e0;
-                border-radius: 0;
-                margin-top: 0;
-                box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
-        /* Ensure action bar content is visible and properly spaced */
-        #step-5 .action-bar {
-            max-height: none;
-            overflow: visible;
+        
+        @keyframes swipe-bounce {
+            0%, 100% { transform: translateX(0) scale(1); }
+            25% { transform: translateX(10px) scale(1.05); }
+            75% { transform: translateX(-10px) scale(1.05); }
         }
-        .material-icons {
-            font-family: 'Material Icons';
-            font-weight: normal;
-            font-style: normal;
-            font-size: 24px;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            -webkit-font-feature-settings: 'liga';
-            font-feature-settings: 'liga';
-            -webkit-font-smoothing: antialiased;
+        
+        @keyframes sparkle-float {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-20px) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-40px) scale(0);
+            }
+        }
+        
+        /* Swipe trail effect */
+        .swipe-trail {
+            position: absolute;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            border-radius: 2px;
+            pointer-events: none;
+            opacity: 0;
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Progress Bar -->
-    <div id="progress-container" class="fixed top-0 left-0 right-0 z-90 bg-white border-b border-gray-200" style="display: none;">
-        <div class="max-w-4xl mx-auto px-4 py-3">
-            <div class="progress-bar">
-                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
-        </div>
-            <div class="flex justify-between mt-2 text-xs text-gray-600">
-                <span>Step <span id="current-step-num">1</span> of 4</span>
-                <span id="step-label">Upload Image</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Step 0: Welcome Screen -->
-    <div id="step-0" class="step active h-screen flex flex-col relative overflow-hidden">
+<body>
+    <!-- Intro Envelope Screen -->
+    <div id="intro-screen" class="step active relative overflow-hidden h-screen">
         <!-- Techy Background -->
         <div class="absolute inset-0 techy-bg"></div>
         
-        <!-- Background Charms Canvas -->
-        <canvas id="home-bg-charms" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 1;"></canvas>
-        
-        <!-- Tiltable Card Container -->
-        <div class="flex-1 flex items-center justify-center px-4 py-6 md:py-8 relative z-10">
-            <div id="home-card" class="home-tilt-card fade-in">
-                <!-- Card Content -->
-                <div class="p-8 md:p-12 py-12 md:py-12">
-                    <!-- Title -->
-                    <div class="text-center mb-8">
-                        <h1 class="text-4xl md:text-6xl font-bold mb-2 leading-tight" style="font-family: Georgia, Palatino, 'Palatino Linotype', 'Book Antiqua', Garamond, 'Times New Roman', serif;">
-                            <div class="relative inline-block">
-                                <div class="text-transparent bg-clip-text bg-gradient-to-r from-[#10b981] via-[#059669] to-[#047857] hue-shift shake-title mb-1">Shaker</div>
-                                <img src="assets/santa hat.png" alt="Santa hat" class="absolute -top-2 -right-4 md:-top-3 md:-right-6 w-8 h-8 md:w-12 md:h-12 object-contain" style="pointer-events: none;">
-                            </div>
-                            <div class="text-gray-800">Card-Maker</div>
-                        </h1>
-                        <p class="text-base md:text-xl text-gray-700 mb-2 font-medium mt-4">Create your digital shaker photo cards</p>
-                        <p class="text-xs md:text-base text-gray-600 max-w-lg mx-auto">Digitize your favorite photo into a shaker card with text bits</p>
-                    </div>
-
-                    <!-- Step Instructions -->
-                    <div class="flex flex-col gap-3 md:gap-6 mb-8 max-w-xl mx-auto">
-                        <div class="text-left md:text-center w-full">
-                            <h3 class="font-semibold text-gray-900 mb-1 text-sm md:text-base">
-                                <span class="hidden md:inline">1. Upload Your Photo</span>
-                                <span class="md:hidden">1. Upload Photo</span>
-                            </h3>
-                            <p class="text-xs md:text-sm text-gray-600">
-                                <span class="hidden md:inline">Upload an image from your device, or take a photo with your camera (mobile). For best sharing, use images under 2MB.</span>
-                                <span class="md:hidden">Upload image or take photo (under 2MB for sharing)</span>
-                            </p>
-                        </div>
-                        <div class="text-left md:text-center w-full">
-                            <h3 class="font-semibold text-gray-900 mb-1 text-sm md:text-base">
-                                <span class="hidden md:inline">2. Apply Filters & Add Charms</span>
-                                <span class="md:hidden">2. Filters & Charms</span>
-                            </h3>
-                            <p class="text-xs md:text-sm text-gray-600">
-                                <span class="hidden md:inline">Customize with filters and shaker text bits</span>
-                                <span class="md:hidden">Customize with filters and text</span>
-                            </p>
-                        </div>
-                        <div class="text-left md:text-center w-full">
-                            <h3 class="font-semibold text-gray-900 mb-1 text-sm md:text-base">
-                                <span class="hidden md:inline">3. Share Your Photo Card</span>
-                                <span class="md:hidden">3. Share Card</span>
-                            </h3>
-                            <p class="text-xs md:text-sm text-gray-600">
-                                <span class="hidden md:inline">Generate a shareable link instantly</span>
-                                <span class="md:hidden">Generate shareable link</span>
-                            </p>
+        <div class="envelope-container relative z-10">
+            <div class="envelope">
+                <div class="envelope-front">
+                    <div class="envelope-top">
+                        <div class="swipe-icon">
+                            <span class="material-icons">swipe_up</span>
                         </div>
                     </div>
-
-                    <!-- CTA Button -->
-                    <div class="text-center mb-6">
-                        <button id="start-btn" class="px-8 py-2 md:py-3 text-base font-semibold text-white rounded-lg transition-all duration-300 hue-shift">
-                            <span class="flex items-center justify-center gap-2">
-                                <span class="md:hidden">create card</span>
-                                <span class="hidden md:inline">Create Your Card</span>
-                                <span class="material-icons text-lg">arrow_forward</span>
-                            </span>
-                        </button>
-                    </div>
-                    
-                    <!-- Footer -->
-                    <div class="text-center pt-4 border-t border-gray-200">
-                        <p class="text-xs text-gray-500 mb-2 hidden md:block">
-                            If you'd like to report a bug or suggest a feature, you can <a href="https://forms.gle/2rem838GryeUay9s8" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors underline" style="color: #059669;">provide feedback here</a>.
-                        </p>
-                        <p class="text-xs text-gray-500 md:hidden">
-                            <a href="https://github.com/blu-octopus" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">TouchyGrass</a> | 
-                            <a href="https://github.com/blu-octopus/diy-photocard-shaker" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">GitHub</a> | 
-                            <a href="https://forms.gle/2rem838GryeUay9s8" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">Feedback Form</a>
-                        </p>
-                        <p class="text-xs text-gray-500 hidden md:block">
-                            Created by <a href="https://github.com/blu-octopus" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">TouchyGrass</a> | 
-                            <a href="https://github.com/blu-octopus/diy-photocard-shaker" target="_blank" rel="noopener noreferrer" class="font-medium transition-colors" style="color: #059669;">GitHub</a>
-                        </p>
+                    <div class="envelope-bottom"></div>
+                    <div class="envelope-content">
+                        <h1 class="envelope-title">You've Got Mail!</h1>
+                        <p class="envelope-subtitle">A special card is waiting for you</p>
+                        <div class="swipe-prompt">
+                            <div class="swipe-text">Swipe or tap to open</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Step 1: Upload Image -->
-    <div id="step-1" class="step bg-white">
-        <div class="flex-1 flex items-center justify-center px-4 py-20">
-            <div class="w-full max-w-md fade-in">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-2 text-center">Upload Your Photo</h2>
-                <p class="text-sm text-gray-500 mb-2 text-center">JPG, PNG, or WEBP ? Max 3MB</p>
-                <p class="text-xs text-amber-600 mb-8 text-center">? Tip: Images under 2MB work best for sharing links</p>
-                
-                <input type="file" id="image-upload" accept="image/*" class="hidden">
-                <label for="image-upload" class="block w-full">
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer transition-all" style="--hover-border: #059669; --hover-bg: rgba(5, 150, 105, 0.1);" onmouseover="this.style.borderColor='#059669'; this.style.backgroundColor='rgba(5, 150, 105, 0.1)';" onmouseout="this.style.borderColor='rgb(209, 213, 219)'; this.style.backgroundColor='';">
-                        <span class="material-icons text-6xl text-gray-400 mb-4 block">cloud_upload</span>
-                        <p class="text-gray-700 font-medium mb-2">Tap to choose from gallery or take a photo</p>
-                        <p class="text-sm text-gray-500">Select from your photos or use camera</p>
-                    </div>
-                </label>
-                <div id="upload-preview" class="mt-6 hidden">
-                    <div class="flex items-center gap-4 bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                        <div class="flex-shrink-0">
-                            <img id="upload-preview-img" src="" alt="Preview" class="w-20 h-20 object-cover rounded-lg shadow-md">
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 text-green-700 font-medium">
-                                <span class="material-icons text-green-600">check_circle</span>
-                                <span>Photo uploaded successfully</span>
-                            </div>
-                            <p id="upload-status" class="text-sm text-gray-600 mt-1"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="action-bar">
-            <button id="step-1-next" class="btn-mui w-full py-3" disabled>
-                Next
-                <span class="material-icons" style="vertical-align: middle; margin-left: 8px;">arrow_forward</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Step 2: Filter Selection -->
-    <div id="step-2" class="step bg-white">
-        <div class="flex-1 flex items-center justify-center px-4 py-20">
-            <div class="w-full max-w-2xl fade-in">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-2 text-center">Choose a Filter</h2>
-                <p class="text-sm text-gray-500 mb-6 text-center">Swipe to see all options</p>
-                
-                <!-- Preview Canvas -->
-                <div class="mb-6 flex justify-center">
-                    <canvas id="preview-canvas-2" width="400" height="400" class="max-w-full h-auto rounded-lg shadow-lg bg-gray-100"></canvas>
-                </div>
-                
-                <!-- Filter Swipe Bar -->
-                <div class="grid grid-cols-3 sm:flex sm:gap-3 sm:overflow-x-auto pb-2 charm-preset-scroll gap-2 justify-items-center sm:justify-start">
-                    <button class="filter-btn filter-preview active" data-filter="none" aria-label="No filter">
-                        <div class="w-20 h-20 rounded-lg bg-gray-100 flex flex-col items-center justify-center text-sm font-medium">
-                            <span class="material-icons text-gray-600 mb-1">image</span>
-                            <span>None</span>
-                        </div>
-                    </button>
-                    <button class="filter-btn filter-preview" data-filter="ccd" aria-label="CCD filter">
-                        <div class="w-20 h-20 rounded-lg bg-blue-100 flex flex-col items-center justify-center text-sm font-medium">
-                            <span class="material-icons text-blue-600 mb-1">color_lens</span>
-                            <span>CCD</span>
-                        </div>
-                    </button>
-                    <button class="filter-btn filter-preview" data-filter="mono" aria-label="Monochrome filter">
-                        <div class="w-20 h-20 rounded-lg bg-gray-200 flex flex-col items-center justify-center text-sm font-medium">
-                            <span class="material-icons text-gray-600 mb-1">filter_b_and_w</span>
-                            <span>Mono</span>
-                        </div>
-                    </button>
-                    <button class="filter-btn filter-preview" data-filter="blur" aria-label="Blur filter">
-                        <div class="w-20 h-20 rounded-lg bg-pink-100 flex flex-col items-center justify-center text-sm font-medium">
-                            <span class="material-icons text-pink-600 mb-1">blur_on</span>
-                            <span>Blur</span>
-                        </div>
-                    </button>
-                    <button class="filter-btn filter-preview" data-filter="glow" aria-label="Glow filter">
-                        <div class="w-20 h-20 rounded-lg bg-yellow-100 flex flex-col items-center justify-center text-sm font-medium">
-                            <span class="material-icons text-yellow-600 mb-1">flare</span>
-                            <span>Glow</span>
-                        </div>
-                    </button>
-                    <button class="filter-btn filter-preview" data-filter="8k" aria-label="8K filter">
-                        <div class="w-20 h-20 rounded-lg bg-green-100 flex flex-col items-center justify-center text-sm font-medium">
-                            <span class="material-icons text-green-600 mb-1">high_quality</span>
-                            <span>8K</span>
-                </div>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="action-bar">
-            <div class="flex gap-3">
-                <button id="step-2-back" class="btn-mui-outlined flex-1 py-3">
-                    <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">arrow_back</span>
-                    Back
-                </button>
-                <button id="step-2-next" class="btn-mui flex-1 py-3">
-                    Next
-                    <span class="material-icons" style="vertical-align: middle; margin-left: 8px;">arrow_forward</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Step 3: Charm Selection -->
-    <div id="step-3" class="step bg-white">
-        <div class="flex-1 flex items-center justify-center px-4 py-20">
-            <div class="w-full max-w-2xl fade-in">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-2 text-center">Add Charms</h2>
-                <p class="text-sm text-gray-500 mb-6 text-center">Type up to 15 characters. Each character becomes 3 charms in your shaker card!</p>
-                
-                <!-- Preview Canvas -->
-                <div class="mb-6 flex justify-center">
-                    <canvas id="preview-canvas-3" width="400" height="400" class="max-w-full h-auto rounded-lg shadow-lg bg-gray-100"></canvas>
-                </div>
-                
-                <!-- Text Input (First) -->
-                <div class="mb-4">
-                    <p class="text-sm font-medium text-gray-700 mb-2">Custom Text:</p>
-                    <input type="text" id="charm-input" placeholder="Type text characters..." maxlength="15" 
-                           class="w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-lg text-center"
-                           style="--focus-ring: #059669;"
-                           onfocus="this.style.borderColor='#059669'; this.style.boxShadow='0 0 0 2px rgba(5, 150, 105, 0.2)';"
-                           onblur="this.style.borderColor='rgb(209, 213, 219)'; this.style.boxShadow='';"
-                           aria-label="Charm input">
-                    <p class="text-xs text-gray-500 mt-2 text-center">Type up to 15 characters (spaces count too, so avoid them). Each character you type becomes 3 floating charms in your shaker card!</p>
-                </div>
-                
-                <!-- Color Presets (Second) -->
-                <div class="mb-4">
-                    <p class="text-sm font-medium text-gray-700 mb-3">Text Color:</p>
-                    <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#E74C3C" style="background-color: #E74C3C; color: white;" aria-label="Red">
-                            Red
-                        </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#F5A623" style="background-color: #F5A623; color: white;" aria-label="Yellow">
-                            Yellow
-                        </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm active" data-color="#7ED321" style="background-color: #7ED321; color: white;" aria-label="Green">
-                            Green
-                        </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#4A90E2" style="background-color: #4A90E2; color: white;" aria-label="Blue">
-                            Blue
-                        </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#000000" style="background-color: #000000; color: white;" aria-label="Black">
-                            Black
-                        </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="#FFFFFF" style="background-color: #FFFFFF; color: #333; border-color: #ccc;" aria-label="White">
-                            White
-                        </button>
-                        <button class="charm-color-btn px-3 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-colors font-medium text-sm" data-color="rainbow" style="background: linear-gradient(90deg, #FFB3BA, #FFDFBA, #FFFFBA, #BAFFC9, #BAE1FF, #E0BAFF); color: #333;" aria-label="Rainbow">
-                            Rainbow
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="action-bar">
-            <div class="flex gap-3">
-                <button id="step-3-back" class="btn-mui-outlined flex-1 py-3">
-                    <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">arrow_back</span>
-                    Back
-                </button>
-                <button id="step-3-next" class="btn-mui flex-1 py-3">
-                    Next
-                    <span class="material-icons" style="vertical-align: middle; margin-left: 8px;">arrow_forward</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Step 4: Text Message -->
-    <div id="step-4" class="step bg-white">
-        <div class="flex-1 flex items-center justify-center px-4 py-20">
-            <div class="w-full max-w-2xl fade-in">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-2 text-center">Add a Message</h2>
-                <p class="text-sm text-gray-500 mb-6 text-center">Optional: Add a custom text message below your card</p>
-                
-                <!-- Preview Canvas -->
-                <div class="mb-6 flex justify-center">
-                    <canvas id="preview-canvas-4" width="400" height="400" class="max-w-full h-auto rounded-lg shadow-lg bg-gray-100"></canvas>
-                </div>
-                
-                <!-- Text Input -->
-                <div class="mb-4">
-                    <textarea id="custom-message-input" placeholder="Enter your message here..." 
-                              onfocus="this.style.borderColor='#059669'; this.style.boxShadow='0 0 0 2px rgba(5, 150, 105, 0.2)';"
-                              onblur="this.style.borderColor='rgb(209, 213, 219)'; this.style.boxShadow='';" 
-                              class="w-full px-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-base resize-none"
-                              rows="3"
-                              maxlength="200"
-                              style="line-height: 1.6; padding-top: 12px; padding-bottom: 12px;"
-                              aria-label="Custom message input"></textarea>
-                    <p class="text-xs text-gray-500 mt-2 text-center">Max 200 characters (optional)</p>
-                </div>
-            </div>
-        </div>
-        <div class="action-bar">
-            <div class="flex gap-3">
-                <button id="step-4-back" class="btn-mui-outlined flex-1 py-3">
-                    <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">arrow_back</span>
-                    Back
-                </button>
-                <button id="step-4-done" class="btn-mui flex-1 py-3">
-                    Create Card
-                    <span class="material-icons" style="vertical-align: middle; margin-left: 8px;">check</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="step bg-white">
-        <div class="flex-1 flex items-center justify-center">
-            <div class="text-center fade-in">
-                <div class="loading-spinner w-16 h-16 mx-auto mb-4"></div>
-                <p class="text-gray-600 font-medium">Creating your shaker card...</p>
-            </div>
-        </div>
-    </div>
-
+    
     <!-- Step 5: Final Shaker Experience -->
-    <div id="step-5" class="step relative overflow-hidden">
+    <div id="step-5" class="step relative overflow-hidden h-screen" style="display: none;">
         <!-- Techy Background -->
         <div class="absolute inset-0 techy-bg"></div>
         
         <!-- Top Right Buttons -->
         <div class="fixed top-4 right-4 z-50 flex gap-2">
-            <button id="share-btn" class="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center" aria-label="Share" style="width: 48px; height: 48px;">
-                <span class="material-icons" style="color: #047857; line-height: 1;">share</span>
-            </button>
-            <button id="sound-toggle-btn" class="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center" aria-label="Toggle sound" style="width: 48px; height: 48px;">
-                <span id="sound-icon" class="material-icons text-gray-700" style="line-height: 1;">volume_up</span>
-            </button>
-            <!-- Visibility Toggle Button -->
-            <button id="visibility-toggle-btn" class="p-3 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center" aria-label="Toggle action bar visibility" style="width: 48px; height: 48px;">
-                <span id="visibility-icon" class="material-icons text-gray-700" style="line-height: 1;">visibility</span>
+            <button id="sound-toggle-btn" class="p-3 bg-white rounded-full shadow-lg hover:bg-blue-50 transition-colors flex items-center justify-center" aria-label="Toggle sound" style="width: 48px; height: 48px;">
+                <span id="sound-icon" class="material-icons" style="line-height: 1; color: #2563eb;">volume_up</span>
             </button>
         </div>
         
@@ -907,32 +415,16 @@
             Your browser does not support the audio element.
         </audio>
         
-        <!-- Action Bar (Bottom of screen) -->
-        <div class="action-bar fixed bottom-0 left-0 right-0" style="z-index: 1000;">
-            <div class="flex flex-col gap-3">
-                <div class="flex justify-center gap-4 md:gap-6">
-                    <button id="download-video-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Download Video">
-                        <span class="material-icons" style="color: #047857;">download</span>
-                        <span class="text-xs font-medium text-gray-700">Download</span>
-                    </button>
-                    <button id="shake-btn" class="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Shake">
-                        <span class="material-icons" style="color: #047857;">vibration</span>
-                        <span class="text-xs font-medium text-gray-700">Shake</span>
-                    </button>
-                </div>
-                <div class="flex justify-center">
-                    <button id="make-another-btn" class="btn-mui-outlined py-2 px-6">
-                        <span class="material-icons" style="vertical-align: middle; margin-right: 8px; font-size: 18px;">add</span>
-                        Make Another One
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Shake Button (Fixed at bottom) -->
+        <button id="shake-btn" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-[#3b82f6] via-[#6366f1] to-[#3b82f6] text-white font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 animate-pulse pointer-events-auto touch-action-manipulation" aria-label="Shake" style="min-width: 140px;">
+            <span class="material-icons text-3xl" style="line-height: 1;">vibration</span>
+            <span class="text-base font-semibold">Shake!</span>
+        </button>
         
         <!-- Canvas Container -->
-        <div class="flex-1 flex flex-col items-center justify-center px-4 pb-32 md:pb-8 pt-20 md:pt-8 relative z-10">
-            <div id="holographic-wrapper" class="relative mb-4" style="max-width: 90vw; max-height: 70vh;">
-                <canvas id="canvas" width="720" height="720" class="bg-white" style="width: auto; height: auto; object-fit: contain; display: block;"></canvas>
+        <div class="flex-1 flex flex-col items-center justify-center px-4 pb-24 md:pb-8 pt-20 md:pt-8 relative z-10">
+            <div id="holographic-wrapper" class="relative mb-4" style="max-width: 75vw; max-height: 70vh;">
+                <canvas id="canvas" class="bg-white" style="display: block; max-width: 100%; max-height: 100%; object-fit: contain;"></canvas>
                 <!-- Holographic overlay layers -->
                 <div class="holo-overlay holo-shine"></div>
                 <div class="holo-overlay holo-glow"></div>
@@ -944,29 +436,7 @@
         </div>
     </div>
 
-    <!-- Share Link Modal -->
-    <div id="share-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-        <div class="bg-white rounded-lg p-6 m-4 max-w-md w-full fade-in shadow-xl">
-            <h3 class="text-xl font-semibold mb-4">Share Your Card</h3>
-            <input type="text" id="share-link" readonly class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm mb-4 border border-gray-300">
-            <div class="flex gap-3 mb-3">
-                <button id="copy-link-btn" class="btn-mui flex-1 py-3">
-                    <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">content_copy</span>
-                    Copy
-                </button>
-                <button id="shorten-url-btn" class="btn-mui-outlined flex-1 py-3">
-                    <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">link</span>
-                    Shorten
-                </button>
-            </div>
-            <div class="flex gap-3">
-                <button id="close-share-modal" class="btn-mui-outlined w-full py-3">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
