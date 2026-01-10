@@ -442,11 +442,12 @@ function updateCharmBodies() {
         const x = Math.random() * (canvasWidth - 100) + 50;
         const y = Math.random() * (canvasHeight * 0.3) + 20;
         
-        // Physics properties: restitution: 0.3, friction: 0.1, frictionAir: 0.15, density: 0.001, chamfer: { radius: 2 }
+        // Physics properties: adjusted for smoother Rive-like fluid motion
+        // Increased frictionAir for smoother deceleration, slightly higher restitution for fluid bounces
         const body = Bodies.circle(x, y, radius, {
-            restitution: 0.3,
-            friction: 0.1,
-            frictionAir: 0.15,
+            restitution: 0.35, // Slightly increased for more fluid bounces
+            friction: 0.08, // Slightly reduced for smoother sliding
+            frictionAir: 0.2, // Increased for smoother, more controlled deceleration (Rive-like)
             density: 0.001,
             chamfer: { radius: 2 }
         });
@@ -836,7 +837,7 @@ function setupParallax() {
             // Call applyParallax() and updateGravityFromOrientation()
             applyParallax(tiltX, tiltY);
             updateGravityFromOrientation(e.beta, e.gamma);
-        });
+        }, { passive: true });
     }
     
     // Sets up mousemove listener on canvas (desktop):
@@ -885,20 +886,24 @@ function applyParallax(x, y) {
     const wrapper = document.getElementById('holographic-wrapper');
     if (!wrapper) return;
     
-    // Calculate rotation (max 15 degrees)
+    // Calculate rotation (max 15 degrees) with smooth easing for Rive-like motion
     const maxTilt = 15;
     const rotateX = y * maxTilt;
     const rotateY = -x * maxTilt;
     
-    // Apply CSS transform: perspective(1000px) rotateX() rotateY()
+    // Apply CSS transform: perspective(1000px) rotateX() rotateY() with smooth transition
+    wrapper.style.transition = 'transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     wrapper.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     
     // Add tilted class to wrapper
     wrapper.classList.add('tilted');
     
-    // Update CSS custom properties --mouse-x and --mouse-y for glow effect
-    wrapper.style.setProperty('--mouse-x', `${(x + 1) * 50}%`);
-    wrapper.style.setProperty('--mouse-y', `${(y + 1) * 50}%`);
+    // Update CSS custom properties --mouse-x and --mouse-y for glow/reflection effect
+    // Map tilt values (-1 to 1) to percentage (0% to 100%)
+    const glowX = ((x + 1) * 50);
+    const glowY = ((y + 1) * 50);
+    wrapper.style.setProperty('--mouse-x', `${glowX}%`);
+    wrapper.style.setProperty('--mouse-y', `${glowY}%`);
 }
 
 // Update gravity based on device orientation (mobile only)
@@ -910,17 +915,20 @@ function updateGravityFromOrientation(beta, gamma) {
     if (!isMobile) return;
     
     // Normalize beta (pitch) and gamma (roll) to -1 to 1
+    // Beta: positive = phone top tilted toward user (forward), negative = phone top tilted away (backward)
+    // When phone end (bottom) is down, beta is negative, so we invert it for gravity
     const betaNormalized = Math.max(-90, Math.min(90, beta || 0)) / 90;
     const gammaNormalized = Math.max(-90, Math.min(90, gamma || 0)) / 90;
     
     // Calculate target gravity (Y: 0.3 กำ 0.2, X: กำ0.15)
+    // Invert beta so when phone end is down (negative beta), gravity increases downward (positive)
     const defaultGravityY = 0.3;
     const maxGravity = 0.5;
-    const targetGravityY = defaultGravityY + (betaNormalized * maxGravity * 0.4);
+    const targetGravityY = defaultGravityY + (-betaNormalized * maxGravity * 0.4);
     const targetGravityX = gammaNormalized * maxGravity * 0.3;
     
-    // Smoothly interpolate current gravity toward target (smoothing factor 0.1)
-    const smoothingFactor = 0.1;
+    // Smoothly interpolate current gravity toward target (increased smoothing for Rive-like fluid motion)
+    const smoothingFactor = 0.15; // Increased from 0.1 for smoother transitions
     state.engine.world.gravity.y += (targetGravityY - state.engine.world.gravity.y) * smoothingFactor;
     state.engine.world.gravity.x += (targetGravityX - state.engine.world.gravity.x) * smoothingFactor;
     
